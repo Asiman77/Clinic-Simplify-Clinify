@@ -3,7 +3,6 @@ package az.clinify.demo.enums;
 public enum AppointmentStatus {
 
     REQUESTED,
-    PENDING, // Xəstə appointment istəyib, həkim hələ təsdiqləməyib
     APPROVED, // Həkim qəbul edib
     REJECTED, // Həkim qəbul etməyib
 //    CHECKED_IN, // Xəstə xəstəxanaya gəlib
