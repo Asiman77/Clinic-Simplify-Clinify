@@ -7,14 +7,19 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+
+//This Entity class are added for booking APppointment which will happen between doctors and patient
+//It extends BaseEntity for id , createdAt , updatedAt fields
 @Entity
 @Table(name = "appointments")
 public class Appointment extends BaseEntity {
 
+//User can book an appointmnet for next days
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "patient_id", nullable = false)
     private User patient;
 
+    //As we know doctors can accept , reject this appointment before this time
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "doctor_id", nullable = false)
     private DoctorProfile doctor;
