@@ -5,6 +5,8 @@ import az.clinify.demo.enums.AppointmentStatus;
 import az.clinify.demo.enums.AppointmentType;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "appointments")
 public class Appointment extends BaseEntity {
@@ -28,5 +30,14 @@ public class Appointment extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private AppointmentStatus status = AppointmentStatus.REQUESTED;
+
+    @Column(name = "start_time", nullable = false)
+    private LocalDateTime startTime;
+
+    @Column(name = "end_time", nullable = false)
+    private LocalDateTime endTime;
+
+    @Column(columnDefinition = "TEXT")
+    private String reason;
 
 }
