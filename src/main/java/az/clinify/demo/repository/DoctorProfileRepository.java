@@ -1,4 +1,8 @@
 package az.clinify.demo.repository;
 
-public class DoctorProfileRepository {
+import az.clinify.demo.entity.DoctorProfile;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, Long> {
+
 }
