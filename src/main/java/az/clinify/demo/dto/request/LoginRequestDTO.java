@@ -17,5 +17,4 @@ public class LoginRequestDTO {
     private String fin;
 
     private String password;
-//passwd null gede bilsin
 }
