@@ -1,5 +1,4 @@
-package az.clinify.demo.security;
-
+package az.clinify.demo.configs;
 
 import javax.sql.DataSource;
 
@@ -25,7 +24,13 @@ public class UserDetailsConfig {
                 "SELECT fin, password, has_account FROM users WHERE fin = ?");
 
         jdbcDao.setAuthoritiesByUsernameQuery(
-                "SELECT fin, CONCAT('ROLE_', role) FROM users WHERE fin = ?");
+                """
+                        SELECT u.fin, CONCAT('ROLE_', r.role)
+                        FROM users u
+                        JOIN user_roles ur ON u.id = ur.user_id
+                        JOIN roles r ON ur.role_id = r.id
+                        WHERE u.fin = ?
+                        """);
 
         return jdbcDao;
     }
