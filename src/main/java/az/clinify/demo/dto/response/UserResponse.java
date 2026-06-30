@@ -22,7 +22,6 @@ public class UserResponse {
     private String phoneNumber;
     private String email;
     private boolean hasAccount;
-    //admin teyin edir
     private Set<String> roles;
 
 }
