@@ -19,7 +19,10 @@ import lombok.RequiredArgsConstructor;
 public class OtpService {
 
     private final OtpCodeRepository otpRepository;
+    private final RestClient restClient;
 
+    @Value("${sms.api.key}")
+    private String apiKey;
 
     @Transactional
     public boolean verifyOtp(String phoneNumber, String userInputCode) {
@@ -43,6 +46,31 @@ public class OtpService {
 
         return true;
     }
+
+    public void sendOtp(String number) {
+
+        String otp = generateOtp(number);
+
+        String smsText = "Sizin OTP kodunuz: " + otp;
+        SmsRequest requestBody = new SmsRequest(number, smsText, "OTP 1SMS");
+
+        try {
+            SmsResponse response = restClient.post()
+                    .uri("https://1sms.az/api/v1/sms/otp")
+                    .header("X-API-Key", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(SmsResponse.class); // Gələn json-ı SmsResponse class-ına çevirir
+
+        } catch (Exception e) {
+            // SMS getməsə belə sistemin çökməməsi üçün xətanı loglayırıq
+            System.err.println("SMS göndərilərkən xəta baş verdi: " + e.getMessage());
+            throw new RuntimeException("SMS provayder xətası: " + e.getMessage());
+        }
+
+    }
+
     private String generateOtp(String phoneNumber) {
 
         // create otp
