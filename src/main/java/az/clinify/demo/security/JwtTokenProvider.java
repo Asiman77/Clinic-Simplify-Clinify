@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class JwtTokenProvider {
@@ -25,8 +26,7 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(Authentication authentication, List<String> selectedRoles) {
-        String fin = authentication.getName();
+    public String generateToken(String fin, Set<String> selectedRoles) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 

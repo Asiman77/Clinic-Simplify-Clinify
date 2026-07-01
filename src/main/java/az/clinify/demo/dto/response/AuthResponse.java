@@ -11,8 +11,11 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthResponse {
+
     private String token;
     private final String tokenType = "Bearer";
     private String fin;
     private Set<String> roles;
+
+    
 }
