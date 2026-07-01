@@ -35,8 +35,13 @@ public class DoctorProfileService {
                 .toList();
     }
 
-    
+    @Transactional(readOnly = true)
+    public DoctorProfileResponse getDoctorById(Long id) {
+        DoctorProfile doctorProfile = findDoctorProfileById(id);
+        return doctorProfileMapper.toResponse(doctorProfile);
+    }
 
+    
     private DoctorProfile findDoctorProfileById(Long id) {
         return doctorProfileRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
@@ -46,7 +51,5 @@ public class DoctorProfileService {
         return departmentRepository.findById(departmentId)
                 .orElseThrow(() -> new RuntimeException("Department not found"));
     }
-
-
 
 }
