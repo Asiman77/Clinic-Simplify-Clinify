@@ -1,7 +1,11 @@
 package az.clinify.demo.service;
 
-import org.springframework.stereotype.Service;
+import java.util.List;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import az.clinify.demo.dto.response.DoctorProfileResponse;
 import az.clinify.demo.entity.Department;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.Role;
@@ -23,6 +27,16 @@ public class DoctorProfileService {
     private final RoleRepository roleRepository;
     private final DoctorProfileMapper doctorProfileMapper;
 
+    @Transactional(readOnly = true)
+    public List<DoctorProfileResponse> getAllDoctors() {
+        return doctorProfileRepository.findByActiveTrue()
+                .stream()
+                .map(doctorProfileMapper::toResponse)
+                .toList();
+    }
+
+    
+
     private DoctorProfile findDoctorProfileById(Long id) {
         return doctorProfileRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
@@ -32,5 +46,7 @@ public class DoctorProfileService {
         return departmentRepository.findById(departmentId)
                 .orElseThrow(() -> new RuntimeException("Department not found"));
     }
+
+
 
 }
