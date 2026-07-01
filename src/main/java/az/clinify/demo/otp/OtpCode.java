@@ -30,7 +30,7 @@ public class OtpCode {
     @Column(name = "is_verified", nullable = false)
     private boolean isVerified = false;
 
-    public OtpCodeEntity(String phoneNumber, String otpCode, LocalDateTime expireAt) {
+    public OtpCode(String phoneNumber, String otpCode, LocalDateTime expireAt) {
         this.phoneNumber = phoneNumber;
         this.otpCode = otpCode;
         this.expireAt = expireAt;
