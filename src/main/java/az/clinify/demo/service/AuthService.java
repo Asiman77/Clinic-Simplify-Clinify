@@ -34,4 +34,17 @@ public class AuthService {
 
 
 
+    public FinCheckResponse checkFin(FinCheckRequest request) {
+        String fin = request.getFin();
+
+        if (userRepository.findByFin(fin).isPresent()) {
+            return new FinCheckResponse(fin, "LOGIN_REQUIRED", "İstifadəçi mövcuddur. Sistem parolunu daxil edin.");
+        }
+
+        if (mockDataRepository.findByFin(fin).isPresent()) {
+            return new FinCheckResponse(fin, "REGISTER_REQUIRED", "İstifadəçi tapılmadı. Dövlət imzasını daxil edin.");
+        }
+
+        throw new EntityNotFoundException("Daxil edilən FIN kodu sistemdə tapılmadı!");
+    }
 }
