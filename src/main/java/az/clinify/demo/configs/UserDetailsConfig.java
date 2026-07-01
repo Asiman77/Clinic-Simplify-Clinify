@@ -21,7 +21,7 @@ public class UserDetailsConfig {
         JdbcUserDetailsManager jdbcDao = new JdbcUserDetailsManager(dataSource);
 
         jdbcDao.setUsersByUsernameQuery(
-                "SELECT fin, password, has_account FROM users WHERE fin = ?");
+                "SELECT fin, password, is_enabled FROM users WHERE fin = ?");
 
         jdbcDao.setAuthoritiesByUsernameQuery(
                 """
