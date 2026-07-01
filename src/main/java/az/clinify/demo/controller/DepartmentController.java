@@ -11,5 +11,5 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/departments")
 public class DepartmentController {
 
-    public DepartmentService departmentService;
+    private final DepartmentService departmentService;
 }
