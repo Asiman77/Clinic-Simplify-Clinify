@@ -1,6 +1,7 @@
 package az.clinify.demo.controller;
 
 import az.clinify.demo.dto.request.CreateDoctorAvailabilityRequest;
+import az.clinify.demo.dto.request.UpdateDoctorAvailabilityRequest;
 import az.clinify.demo.dto.response.DoctorAvailabilityResponse;
 import az.clinify.demo.service.DoctorAvailabilityService;
 import jakarta.validation.Valid;
@@ -36,6 +37,24 @@ public class DoctorAvailabilityController {
             @PathVariable Long doctorId){
         return ResponseEntity.ok(availabilityService.getDoctorAvailabilitiesByDoctorId(doctorId));
     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void>deleteAvailability(@PathVariable Long id){
+        availabilityService.deleteDoctorAvailability(id);
+        return ResponseEntity.noContent().build();
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<DoctorAvailabilityResponse>updateAvailability(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateDoctorAvailabilityRequest request){
+        return ResponseEntity.ok(availabilityService.updateDoctorAvailability(id,request));
+    }
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<DoctorAvailabilityResponse>updateAvailabilityStatus(
+            @PathVariable Long id,
+            @RequestParam Boolean active){
+        return ResponseEntity.ok(availabilityService.updateAvailabilityStatus(id,active));
+    }
+
 
 
 
