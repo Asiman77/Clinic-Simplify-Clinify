@@ -43,7 +43,7 @@ public class User extends BaseEntity {
     private String password;
 
     @Column(nullable = false)
-    private boolean isEnabled = false;
+    private boolean hasAccount = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
