@@ -58,4 +58,10 @@ public class DoctorProfileController {
     public DoctorProfileResponse activateDoctor(@PathVariable Long id) {
         return doctorProfileService.activateDoctor(id);
     }
+
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PatchMapping("/{id}/deactivate")
+    public DoctorProfileResponse deactivateDoctor(@PathVariable Long id) {
+        return doctorProfileService.deactivateDoctor(id);
+    }
 }
