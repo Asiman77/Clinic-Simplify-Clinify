@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import az.clinify.demo.dto.request.CreateDoctorProfileRequest;
+import az.clinify.demo.dto.request.UpdateDoctorProfileRequest;
 import az.clinify.demo.dto.response.DoctorProfileResponse;
 import az.clinify.demo.entity.Department;
 import az.clinify.demo.entity.DoctorProfile;
@@ -50,7 +51,6 @@ public class DoctorProfileService {
 
     @Transactional
     public DoctorProfileResponse createDoctor(CreateDoctorProfileRequest request) {
-
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + request.getUserId()));
 
@@ -76,6 +76,15 @@ public class DoctorProfileService {
         }
 
         DoctorProfile doctorProfile = doctorProfileMapper.toEntity(request, user, department);
+        DoctorProfile savedDoctorProfile = doctorProfileRepository.save(doctorProfile);
+        return doctorProfileMapper.toResponse(savedDoctorProfile);
+    }
+
+    @Transactional
+    public DoctorProfileResponse updateDoctor(Long id, UpdateDoctorProfileRequest request) {
+        DoctorProfile doctorProfile = findDoctorProfileById(id);
+        Department department = findDepartmentById(request.getDepartmentId());
+        doctorProfileMapper.updateEntity(doctorProfile, request, department);
         DoctorProfile savedDoctorProfile = doctorProfileRepository.save(doctorProfile);
         return doctorProfileMapper.toResponse(savedDoctorProfile);
     }
