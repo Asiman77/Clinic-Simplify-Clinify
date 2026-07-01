@@ -27,8 +27,8 @@ public class OtpCode {
     @Column(name = "expire_at", nullable = false)
     private LocalDateTime expireAt;
 
-    @Column(name = "is_verified", nullable = false)
-    private boolean isVerified = false;
+    @Column(name = "is_used", nullable = false)
+    private boolean isUsed = false;
 
     public OtpCode(String phoneNumber, String otpCode, LocalDateTime expireAt) {
         this.phoneNumber = phoneNumber;
