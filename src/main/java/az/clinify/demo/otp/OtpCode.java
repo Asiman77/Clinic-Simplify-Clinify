@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class OtpCodeEntity {
+public class OtpCode {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
