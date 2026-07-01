@@ -60,6 +60,12 @@ public class DoctorAvailabilityService {
                 .map(doctorAvailabilityMapper::toResponse)
                 .toList();
     }
+    public void deleteDoctorAvailability(Long id) {
+        DoctorAvailability availability = availabilityRepository.findById(id)
+                .orElseThrow(() -> new DoctorNotAvailableException("Availability not found"));
+        availabilityRepository.delete(availability);
+    }
+
 
 
 }
