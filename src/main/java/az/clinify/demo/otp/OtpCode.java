@@ -34,6 +34,6 @@ public class OtpCode {
         this.phoneNumber = phoneNumber;
         this.otpCode = otpCode;
         this.expireAt = expireAt;
-        this.isVerified = false;
+        this.isUsed = false;
     }
 }
