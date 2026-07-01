@@ -40,5 +40,12 @@ public class DepartmentController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteDepartment(@PathVariable Long id) {
+        departmentService.deleteDepartment(id);
+
+        return ResponseEntity.noContent().build();
+    }
 
 }
