@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class LoginRequestDTO {
+public class AuthRequestDTO {
     @NotBlank(message = "FIN cannot be blank")
     @Size(min = 7,max = 7,message = "FIN must be exactly 7 characters")
     private String fin;
