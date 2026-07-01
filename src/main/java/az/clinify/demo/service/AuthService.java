@@ -40,22 +40,22 @@ public class AuthService {
         boolean present = userRepository.findByFin(fin).isPresent();
 
         if (present) {
-            return new FinCheckResponse(fin, "LOGIN_REQUIRED", "İstifadəçi mövcuddur. Sistem parolunu daxil edin.");
+            return new FinCheckResponse(fin, "LOGIN_REQUIRED", "Please insert password");
         }
 
         if (!present) {
-            return new FinCheckResponse(fin, "REGISTER_REQUIRED", "İstifadəçi tapılmadı. Dövlət imzasını daxil edin.");
+            return new FinCheckResponse(fin, "REGISTER_REQUIRED", "You are not registered. Please insert signature.");
         }
 
-        throw new EntityNotFoundException("Daxil edilən FIN kodu movcud deyil!");
+        throw new EntityNotFoundException("this fin does not exist.");
     }
 
     public AuthResponse login(AuthRequestDTO request) {
         User user = userRepository.findByFin(request.getFin())
-                .orElseThrow(() -> new UserNotFoundException("İstifadəçi tapılmadı."));
+                .orElseThrow(() -> new UserNotFoundException("This fin does not exist"));
 
         if (!user.getPassword().equals(request.getPassword())) {
-            throw new BadCredentialsException("Sistem parolu yanlışdır!");
+            throw new BadCredentialsException("Password is wrong.");
         }
         Set<String> rolesList = user.getRoles().stream()
                 .map(Role::getName) 
@@ -75,10 +75,10 @@ public class AuthService {
 
     public String registerFromMock(AuthRequestDTO request) {
         MockData mockData = mockDataRepository.findByFin(request.getFin())
-                .orElseThrow(() -> new EntityNotFoundException("Bu FIN mock serverdə tapılmadı."));
+                .orElseThrow(() -> new EntityNotFoundException("This fin does not exists."));
 
         if (!mockData.getPassword().equals(request.getPassword())) {
-            throw new BadCredentialsException("Daxil edilən mock imza yanlışdır!");
+            throw new BadCredentialsException("Your signature is wrong");
         }
 
         User newUser = new User();
@@ -89,12 +89,11 @@ public class AuthService {
         newUser.setBirthDate(mockData.getBirthDate());
 
 
-        //idk if 
         newUser.setPassword(request.getPassword());
 
         userRepository.save(newUser);
 
-        return "Qeydiyyat tamamlandı. Zəhmət olmasa yenidən login endpointinə müraciət edin.";
+        return "You registered succesfully. Please go back to login page.";
     }
 
 }
