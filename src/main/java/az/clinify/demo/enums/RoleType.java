@@ -2,7 +2,7 @@ package az.clinify.demo.enums;
 
 public enum RoleType {
 
-    SUPER_ADMIN,
+    ADMIN,
     PATIENT,
     RECEPTION,
     DOCTOR, 
