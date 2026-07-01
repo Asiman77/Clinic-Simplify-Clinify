@@ -26,8 +26,14 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(DepartmentNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleDepartmentNotFound(DepartmentNotFoundException ex) {
-        ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Not found", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not found",
+                ex.getMessage()
+        );
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
     }
     @ExceptionHandler(AppointmentNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAppointmentNotFound(AppointmentNotFoundException ex) {
