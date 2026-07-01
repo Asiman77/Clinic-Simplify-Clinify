@@ -14,6 +14,7 @@ import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.Role;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.RoleType;
+import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.BaseConflictException;
 import az.clinify.demo.exceptions.BaseNotFoundException;
 import az.clinify.demo.exceptions.DepartmentNotFoundException;
@@ -85,6 +86,17 @@ public class DoctorProfileService {
         DoctorProfile doctorProfile = findDoctorProfileById(id);
         Department department = findDepartmentById(request.getDepartmentId());
         doctorProfileMapper.updateEntity(doctorProfile, request, department);
+        DoctorProfile savedDoctorProfile = doctorProfileRepository.save(doctorProfile);
+        return doctorProfileMapper.toResponse(savedDoctorProfile);
+    }
+
+    @Transactional
+    public DoctorProfileResponse deactivateDoctor(Long id) {
+        DoctorProfile doctorProfile = findDoctorProfileById(id);
+        if (Boolean.FALSE.equals(doctorProfile.getActive())) {
+            throw new BaseBadRequestException("Doctor profile is already inactive");
+        }
+        doctorProfile.setActive(false);
         DoctorProfile savedDoctorProfile = doctorProfileRepository.save(doctorProfile);
         return doctorProfileMapper.toResponse(savedDoctorProfile);
     }
