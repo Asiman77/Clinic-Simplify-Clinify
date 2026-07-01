@@ -75,10 +75,10 @@ public class AuthService {
 
     public String registerFromMock(AuthRequestDTO request) {
         MockData mockData = mockDataRepository.findByFin(request.getFin())
-                .orElseThrow(() -> new EntityNotFoundException("Bu FIN mock serverdə tapılmadı."));
+                .orElseThrow(() -> new EntityNotFoundException("This fin does not exists."));
 
         if (!mockData.getPassword().equals(request.getPassword())) {
-            throw new BadCredentialsException("Daxil edilən mock imza yanlışdır!");
+            throw new BadCredentialsException("Your signature is wrong");
         }
 
         User newUser = new User();
@@ -89,12 +89,11 @@ public class AuthService {
         newUser.setBirthDate(mockData.getBirthDate());
 
 
-        //idk if 
         newUser.setPassword(request.getPassword());
 
         userRepository.save(newUser);
 
-        return "Qeydiyyat tamamlandı. Zəhmət olmasa yenidən login endpointinə müraciət edin.";
+        return "You registered succesfully. Please go back to login page.";
     }
 
 }
