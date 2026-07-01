@@ -52,10 +52,10 @@ public class AuthService {
 
     public AuthResponse login(AuthRequestDTO request) {
         User user = userRepository.findByFin(request.getFin())
-                .orElseThrow(() -> new UserNotFoundException("İstifadəçi tapılmadı."));
+                .orElseThrow(() -> new UserNotFoundException("This fin does not exist"));
 
         if (!user.getPassword().equals(request.getPassword())) {
-            throw new BadCredentialsException("Sistem parolu yanlışdır!");
+            throw new BadCredentialsException("Password is wrong.");
         }
         Set<String> rolesList = user.getRoles().stream()
                 .map(Role::getName) 
