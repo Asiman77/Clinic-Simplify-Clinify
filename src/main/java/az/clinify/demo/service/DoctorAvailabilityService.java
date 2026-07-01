@@ -12,6 +12,9 @@ import az.clinify.demo.repository.DoctorAvailabilityRepository;
 import az.clinify.demo.repository.DoctorProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 @RequiredArgsConstructor
 @Service
 public class DoctorAvailabilityService {
@@ -37,10 +40,18 @@ public class DoctorAvailabilityService {
 
         return doctorAvailabilityMapper.toResponse(availability);
     }
+
     public DoctorAvailabilityResponse getDoctorAvailabilityById(Long id) {
         DoctorAvailability availability = availabilityRepository.findById(id)
                 .orElseThrow(() -> new DoctorNotAvailableException("Availability not found"));
         return doctorAvailabilityMapper.toResponse(availability);
+    }
+
+    public List<DoctorAvailabilityResponse> getAllDoctorAvailabilities() {
+        return availabilityRepository.findAll()
+                .stream()
+                .map(doctorAvailabilityMapper::toResponse)
+                .toList();
     }
 
 
