@@ -54,5 +54,12 @@ public class DoctorAvailabilityService {
                 .toList();
     }
 
+    public List<DoctorAvailabilityResponse> getDoctorAvailabilitiesByDoctorId(Long doctorId) {
+        return availabilityRepository.findByDoctorId(doctorId)
+                .stream()
+                .map(doctorAvailabilityMapper::toResponse)
+                .toList();
+    }
+
 
 }
