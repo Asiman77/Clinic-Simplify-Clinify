@@ -43,4 +43,17 @@ public class OtpService {
 
         return true;
     }
+    private String generateOtp(String phoneNumber) {
+
+        // create otp
+        String otp = String.format("%04d", new Random().nextInt(10000));
+
+        // save in db
+        LocalDateTime expireAt = LocalDateTime.now().plusMinutes(3);
+        OtpCode newOtp = new OtpCode(phoneNumber, otp, expireAt);
+
+        otpRepository.save(newOtp);
+
+        return otp;
+    }
 }
