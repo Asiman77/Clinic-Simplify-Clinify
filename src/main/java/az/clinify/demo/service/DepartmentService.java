@@ -62,4 +62,14 @@ public class DepartmentService {
 
     }
 
+    @Transactional
+    public void deleteDepartment(Long id) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new DepartmentNotFoundException(id));
+
+        department.setActive(false);
+
+        departmentRepository.save(department);
+    }
+
 }
