@@ -83,6 +83,15 @@ public class DoctorAvailabilityService {
 
         return doctorAvailabilityMapper.toResponse(availability);
     }
+    public DoctorAvailabilityResponse updateAvailabilityStatus(Long id,Boolean active){
+        DoctorAvailability availability = availabilityRepository.findById(id)
+                .orElseThrow(() -> new DoctorNotAvailableException("Availability not found"));
+
+        availability.setActive(active);
+        availabilityRepository.save(availability);
+
+        return doctorAvailabilityMapper.toResponse(availability);
+    }
 
 
 
