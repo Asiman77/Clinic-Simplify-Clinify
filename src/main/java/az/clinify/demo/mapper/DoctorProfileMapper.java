@@ -1,6 +1,7 @@
 package az.clinify.demo.mapper;
 
 import az.clinify.demo.dto.request.CreateDoctorProfileRequest;
+import az.clinify.demo.dto.request.UpdateDoctorProfileRequest;
 import az.clinify.demo.dto.response.DoctorProfileResponse;
 import az.clinify.demo.entity.Department;
 import az.clinify.demo.entity.DoctorProfile;
@@ -46,5 +47,13 @@ public class DoctorProfileMapper {
         doctorProfile.setExperienceYears(request.getExperienceYears());
         doctorProfile.setActive(request.getActive() != null ? request.getActive() : true);
         return doctorProfile;
+    }
+
+    public void updateEntity(DoctorProfile doctorProfile, UpdateDoctorProfileRequest request, Department department) {
+        doctorProfile.setDepartment(department);
+        doctorProfile.setSpecialization(request.getSpecialization());
+        doctorProfile.setBio(request.getBio());
+        doctorProfile.setExperienceYears(request.getExperienceYears());
+        doctorProfile.setActive(request.getActive());
     }
 }
