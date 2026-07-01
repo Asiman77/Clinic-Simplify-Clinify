@@ -101,6 +101,17 @@ public class DoctorProfileService {
         return doctorProfileMapper.toResponse(savedDoctorProfile);
     }
 
+    @Transactional
+    public DoctorProfileResponse activateDoctor(Long id) {
+        DoctorProfile doctorProfile = findDoctorProfileById(id);
+        if (Boolean.TRUE.equals(doctorProfile.getActive())) {
+            throw new BaseBadRequestException("Doctor profile is already active");
+        }
+        doctorProfile.setActive(true);
+        DoctorProfile savedDoctorProfile = doctorProfileRepository.save(doctorProfile);
+        return doctorProfileMapper.toResponse(savedDoctorProfile);
+    }
+
     private DoctorProfile findDoctorProfileById(Long id) {
         return doctorProfileRepository.findById(id)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor profile not found with id: " + id));
