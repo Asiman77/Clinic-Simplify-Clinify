@@ -40,14 +40,14 @@ public class AuthService {
         boolean present = userRepository.findByFin(fin).isPresent();
 
         if (present) {
-            return new FinCheckResponse(fin, "LOGIN_REQUIRED", "İstifadəçi mövcuddur. Sistem parolunu daxil edin.");
+            return new FinCheckResponse(fin, "LOGIN_REQUIRED", "Please insert password");
         }
 
         if (!present) {
-            return new FinCheckResponse(fin, "REGISTER_REQUIRED", "İstifadəçi tapılmadı. Dövlət imzasını daxil edin.");
+            return new FinCheckResponse(fin, "REGISTER_REQUIRED", "You are not registered. Please insert signature.");
         }
 
-        throw new EntityNotFoundException("Daxil edilən FIN kodu movcud deyil!");
+        throw new EntityNotFoundException("this fin does not exist.");
     }
 
     public AuthResponse login(AuthRequestDTO request) {
