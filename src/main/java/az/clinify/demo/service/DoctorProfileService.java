@@ -13,8 +13,11 @@ import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.Role;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.RoleType;
+import az.clinify.demo.exceptions.BaseConflictException;
+import az.clinify.demo.exceptions.BaseNotFoundException;
 import az.clinify.demo.exceptions.DepartmentNotFoundException;
 import az.clinify.demo.exceptions.DoctorNotFoundException;
+import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.DoctorProfileMapper;
 import az.clinify.demo.repository.DepartmentRepository;
 import az.clinify.demo.repository.DoctorProfileRepository;
@@ -43,6 +46,38 @@ public class DoctorProfileService {
     public DoctorProfileResponse getDoctorById(Long id) {
         DoctorProfile doctorProfile = findDoctorProfileById(id);
         return doctorProfileMapper.toResponse(doctorProfile);
+    }
+
+    @Transactional
+    public DoctorProfileResponse createDoctor(CreateDoctorProfileRequest request) {
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + request.getUserId()));
+
+        Department department = findDepartmentById(request.getDepartmentId());
+
+        if (doctorProfileRepository.existsByUserId(user.getId())) {
+            throw new BaseConflictException("Doctor profile already exists for user id: " + user.getId());
+        }
+
+        if (user.getRoles() == null) {
+            user.setRoles(new HashSet<>());
+        }
+
+        boolean hasDoctorRole = user.getRoles()
+                .stream()
+                .anyMatch(role -> role.getName() == RoleType.DOCTOR);
+
+        if (!hasDoctorRole) {
+            Role doctorRole = roleRepository.findByName(RoleType.DOCTOR)
+                    .orElseThrow(() -> new BaseNotFoundException("DOCTOR role not found"));
+            user.getRoles().add(doctorRole);
+            userRepository.save(user);
+        }
+
+        DoctorProfile doctorProfile = doctorProfileMapper.toEntity(request, user, department);
+        DoctorProfile savedDoctorProfile = doctorProfileRepository.save(doctorProfile);
+        return doctorProfileMapper.toResponse(savedDoctorProfile);
     }
 
     private DoctorProfile findDoctorProfileById(Long id) {
