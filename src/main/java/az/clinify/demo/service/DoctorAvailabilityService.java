@@ -1,6 +1,7 @@
 package az.clinify.demo.service;
 
 import az.clinify.demo.dto.request.CreateDoctorAvailabilityRequest;
+import az.clinify.demo.dto.request.UpdateDoctorAvailabilityRequest;
 import az.clinify.demo.dto.response.DoctorAvailabilityResponse;
 import az.clinify.demo.entity.DoctorAvailability;
 import az.clinify.demo.entity.DoctorProfile;
@@ -10,6 +11,7 @@ import az.clinify.demo.mapper.DoctorAvailabilityMapper;
 import az.clinify.demo.mapper.DoctorProfileMapper;
 import az.clinify.demo.repository.DoctorAvailabilityRepository;
 import az.clinify.demo.repository.DoctorProfileRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +66,22 @@ public class DoctorAvailabilityService {
         DoctorAvailability availability = availabilityRepository.findById(id)
                 .orElseThrow(() -> new DoctorNotAvailableException("Availability not found"));
         availabilityRepository.delete(availability);
+    }
+    @Transactional
+    public DoctorAvailabilityResponse updateDoctorAvailability(Long id, UpdateDoctorAvailabilityRequest request) {
+        DoctorAvailability availability = availabilityRepository.findById(id)
+                .orElseThrow(() -> new DoctorNotAvailableException("Availability not found"));
+
+        availability.setDayOfWeek(request.getDayOfWeek());
+        availability.setStartTime(request.getStartTime());
+        availability.setEndTime(request.getEndTime());
+        availability.setSlotDurationMinutes(request.getSlotDurationMinutes());
+        availability.setAvailabilityType(request.getAvailabilityType());
+        availability.setActive(request.getActive());
+
+        availabilityRepository.save(availability);
+
+        return doctorAvailabilityMapper.toResponse(availability);
     }
 
 
