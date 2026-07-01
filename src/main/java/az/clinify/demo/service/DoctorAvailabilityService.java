@@ -4,6 +4,7 @@ import az.clinify.demo.dto.request.CreateDoctorAvailabilityRequest;
 import az.clinify.demo.dto.response.DoctorAvailabilityResponse;
 import az.clinify.demo.entity.DoctorAvailability;
 import az.clinify.demo.entity.DoctorProfile;
+import az.clinify.demo.exceptions.DoctorNotAvailableException;
 import az.clinify.demo.exceptions.DoctorNotFoundException;
 import az.clinify.demo.mapper.DoctorAvailabilityMapper;
 import az.clinify.demo.mapper.DoctorProfileMapper;
@@ -34,6 +35,11 @@ public class DoctorAvailabilityService {
 
         availabilityRepository.save(availability);
 
+        return doctorAvailabilityMapper.toResponse(availability);
+    }
+    public DoctorAvailabilityResponse getDoctorAvailabilityById(Long id) {
+        DoctorAvailability availability = availabilityRepository.findById(id)
+                .orElseThrow(() -> new DoctorNotAvailableException("Availability not found"));
         return doctorAvailabilityMapper.toResponse(availability);
     }
 
