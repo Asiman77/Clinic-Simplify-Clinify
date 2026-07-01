@@ -9,6 +9,7 @@ import az.clinify.demo.dto.response.FinCheckResponse;
 import az.clinify.demo.entity.Role;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.RoleType;
+import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mockServer.MockData;
 import az.clinify.demo.mockServer.MockDataRepository;
 import az.clinify.demo.repository.UserRepository;
@@ -36,21 +37,22 @@ public class AuthService {
 
     public FinCheckResponse checkFin(FinCheckRequest request) {
         String fin = request.getFin();
+        boolean present = userRepository.findByFin(fin).isPresent();
 
-        if (userRepository.findByFin(fin).isPresent()) {
+        if (present) {
             return new FinCheckResponse(fin, "LOGIN_REQUIRED", "İstifadəçi mövcuddur. Sistem parolunu daxil edin.");
         }
 
-        if (mockDataRepository.findByFin(fin).isPresent()) {
+        if (!present) {
             return new FinCheckResponse(fin, "REGISTER_REQUIRED", "İstifadəçi tapılmadı. Dövlət imzasını daxil edin.");
         }
 
-        throw new EntityNotFoundException("Daxil edilən FIN kodu sistemdə tapılmadı!");
+        throw new EntityNotFoundException("Daxil edilən FIN kodu movcud deyil!");
     }
 
     public AuthResponse login(AuthRequestDTO request) {
         User user = userRepository.findByFin(request.getFin())
-                .orElseThrow(() -> new EntityNotFoundException("İstifadəçi tapılmadı."));
+                .orElseThrow(() -> new UserNotFoundException("İstifadəçi tapılmadı."));
 
         if (!user.getPassword().equals(request.getPassword())) {
             throw new BadCredentialsException("Sistem parolu yanlışdır!");
