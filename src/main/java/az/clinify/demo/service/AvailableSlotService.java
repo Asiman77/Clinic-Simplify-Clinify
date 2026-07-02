@@ -13,6 +13,7 @@ import az.clinify.demo.entity.Appointment;
 import az.clinify.demo.entity.DoctorAvailability;
 import az.clinify.demo.enums.AppointmentStatus;
 import az.clinify.demo.enums.AppointmentType;
+import az.clinify.demo.enums.AvailabilityType;
 import az.clinify.demo.exceptions.DoctorNotFoundException;
 import az.clinify.demo.repository.AppointmentRepository;
 import az.clinify.demo.repository.DoctorAvailabilityRepository;
@@ -43,6 +44,26 @@ public class AvailableSlotService {
 
         List<Appointment> bookedAppointments = appointmentRepository
                 .findByDoctorIdAndStartTimeBetweenAndStatusIn(doctorId, dayStart, dayEnd, blockingStatuses);
+
         return List.of();
+    }
+
+    private boolean supportsRequestedType(AvailabilityType availabilityType, AppointmentType requestedType) {
+        if (requestedType == AppointmentType.ONLINE) {
+            return availabilityType == AvailabilityType.ONLINE_ONLY
+                    || availabilityType == AvailabilityType.MIXED;
+        }
+
+        if (requestedType == AppointmentType.WALK_IN) {
+            return availabilityType == AvailabilityType.WALK_IN_ONLY
+                    || availabilityType == AvailabilityType.MIXED;
+        }
+
+        return false;
+    }
+
+    private boolean isOverlapping(LocalDateTime slotStart, LocalDateTime slotEnd, LocalDateTime appointmentStart,
+            LocalDateTime appointmentEnd) {
+        return slotStart.isBefore(appointmentEnd) && slotEnd.isAfter(appointmentStart);
     }
 }
