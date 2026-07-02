@@ -3,9 +3,11 @@ package az.clinify.demo.repository;
 import az.clinify.demo.entity.DoctorAvailability;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
+import java.time.DayOfWeek;
+import java.util.List;
 
 public interface DoctorAvailabilityRepository extends JpaRepository<DoctorAvailability, Long> {
-    Optional<DoctorAvailability>findByDoctorId(Long aLong);
+    List<DoctorAvailability> findByDoctorId(Long doctorId);
 
+    List<DoctorAvailability> findByDoctorIdAndDayOfWeekAndActiveTrue(Long doctorId, DayOfWeek dayOfWeek);
 }
