@@ -4,14 +4,17 @@ import org.springframework.stereotype.Service;
 
 import az.clinify.demo.dto.request.AuthRequestDTO;
 import az.clinify.demo.dto.request.FinCheckRequest;
+import az.clinify.demo.dto.request.PasswordSetupRequest;
 import az.clinify.demo.dto.response.AuthResponse;
 import az.clinify.demo.dto.response.FinCheckResponse;
+import az.clinify.demo.dto.response.RegisterVerifyResponse;
 import az.clinify.demo.entity.Role;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.RoleType;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mockServer.MockData;
 import az.clinify.demo.mockServer.MockDataRepository;
+import az.clinify.demo.mockServer.MockDataService;
 import az.clinify.demo.repository.UserRepository;
 import az.clinify.demo.security.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
@@ -32,8 +35,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final MockDataRepository mockDataRepository;
     private final JwtTokenProvider jwtTokenProvider;
-
-
+    private final MockDataService mockDataService;
 
     public FinCheckResponse checkFin(FinCheckRequest request) {
         String fin = request.getFin();
@@ -58,28 +60,41 @@ public class AuthService {
             throw new BadCredentialsException("Password is wrong.");
         }
         Set<String> rolesList = user.getRoles().stream()
-                .map(Role::getName) 
+                .map(Role::getName)
                 .map(RoleType::name)
                 .collect(Collectors.toSet());
 
-        
         String token = jwtTokenProvider.generateToken(user.getFin(), rolesList);
 
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setFin(user.getFin());
-        response.setRoles(rolesList); 
+        response.setRoles(rolesList);
 
         return response;
     }
 
-    public String registerFromMock(AuthRequestDTO request) {
-        MockData mockData = mockDataRepository.findByFin(request.getFin())
-                .orElseThrow(() -> new EntityNotFoundException("This fin does not exists."));
+    public RegisterVerifyResponse registerFromMock(AuthRequestDTO request) {
 
-        if (!mockData.getPassword().equals(request.getPassword())) {
-            throw new BadCredentialsException("Your signature is wrong");
+        mockDataService.verifySignature(request.getFin(), request.getPassword());
+
+        return new RegisterVerifyResponse(
+                request.getFin(),
+                true,
+                "Signature verified successfully. Please proceed to setup your password.",
+                "SETUP_PASSWORD_REQUIRED");
+
+    }
+
+
+    public String setupPassword(PasswordSetupRequest request) {
+        // İstifadəçi artıq qeydiyyatdan keçibsə, təkrar yaratmayaq
+        if (userRepository.findByFin(request.getFin()).isPresent()) {
+            throw new IllegalStateException("User is already registered with this FIN.");
         }
+
+        MockData mockData = mockDataRepository.findByFin(request.getFin())
+                .orElseThrow(() -> new EntityNotFoundException("Mock data not found for this FIN."));
 
         User newUser = new User();
         newUser.setFin(mockData.getFin());
@@ -88,12 +103,12 @@ public class AuthService {
         newUser.setGender(mockData.getGender());
         newUser.setBirthDate(mockData.getBirthDate());
 
-
+        // Front-dan gələn yeni əsas şifrəni təyin edirik
         newUser.setPassword(request.getPassword());
 
         userRepository.save(newUser);
 
-        return "You registered succesfully. Please go back to login page.";
+        return "Account created successfully! Please proceed to the login page.";
     }
 
 }
