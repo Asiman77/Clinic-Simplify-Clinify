@@ -29,7 +29,6 @@ public class MedicalRecordRequestDTO {
     @Size(max = 2000, message = "Receipt must not exceed 2000 characters")
     private String receipt;
 
-    @NotNull(message = "Lab status is required")
     private LabStatuses labStatus;
 
     @Size(max = 1000, message = "Test name must not exceed 1000 characters")
