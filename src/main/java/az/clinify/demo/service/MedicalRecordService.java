@@ -57,5 +57,10 @@ public class MedicalRecordService {
             }
             return medicalRecordMapper.toResponse( medicalRecordRepository.save(medicalRecord));
         }
+    public MedicalRecordResponseDTO returnMedicalRecord(Long id){
+        MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
+                .orElseThrow(() -> new MedicalRecordNotFoundException("not found"));
+        return medicalRecordMapper.toResponse(medicalRecord);
+    }
 
 }
