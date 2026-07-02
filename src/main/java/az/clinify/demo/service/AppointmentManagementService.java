@@ -19,6 +19,22 @@ public class AppointmentManagementService {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
 
+    @Transactional(readOnly = true)
+    public List<AppointmentResponseDTO> getAllAppointments() {
+        return appointmentRepository.findAll()
+                .stream()
+                .map(appointmentMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AppointmentResponseDTO getAppointmentById(Long id) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found, id: " + id));
+
+        return appointmentMapper.toResponse(appointment);
+    }
+
     @Transactional
     public List<AppointmentResponseDTO> getByPatient(Long patientId) {
         return appointmentRepository.findByPatientId(patientId).stream()
