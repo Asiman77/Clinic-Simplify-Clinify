@@ -3,11 +3,13 @@ package az.clinify.demo.service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import az.clinify.demo.dto.request.AppointmentStatusRequest;
 import az.clinify.demo.dto.response.AvailableSlotResponse;
 import az.clinify.demo.entity.Appointment;
 import az.clinify.demo.entity.DoctorAvailability;
@@ -45,7 +47,27 @@ public class AvailableSlotService {
         List<Appointment> bookedAppointments = appointmentRepository
                 .findByDoctorIdAndStartTimeBetweenAndStatusIn(doctorId, dayStart, dayEnd, blockingStatuses);
 
-        return List.of();
+        List<AvailableSlotResponse> slots = new ArrayList<>();
+        for (DoctorAvailability availability : availabilities) {
+            LocalDateTime slotStart = LocalDateTime.of(date, availability.getStartTime());
+            LocalDateTime availabilityEnd = LocalDateTime.of(date, availability.getEndTime());
+
+            while (!slotStart.plusMinutes(availability.getSlotDurationMinutes()).isAfter(availabilityEnd)) {
+                LocalDateTime slotEnd = slotStart.plusMinutes(availability.getSlotDurationMinutes());
+                LocalDateTime currentSlotStart = slotStart;
+                LocalDateTime currentSlotEnd = slotEnd;
+                boolean booked = bookedAppointments.stream()
+                        .anyMatch(appointment -> isOverlapping(
+                                currentSlotStart,
+                                currentSlotEnd,
+                                appointment.getStartTime(),
+                                appointment.getEndTime()));
+                slots.add(new AvailableSlotResponse(currentSlotStart, currentSlotEnd, !booked));
+                slotStart = slotEnd;
+            }
+        }
+
+        return slots;
     }
 
     private boolean supportsRequestedType(AvailabilityType availabilityType, AppointmentType requestedType) {
