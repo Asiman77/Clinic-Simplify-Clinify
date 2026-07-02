@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import az.clinify.demo.dto.request.AppointmentRequestDTO;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
+import az.clinify.demo.entity.Appointment;
 import az.clinify.demo.entity.DoctorAvailability;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.User;
@@ -47,6 +48,7 @@ public class AppointmentBookingService {
         DoctorProfile doctor = doctorProfileRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found with id: " + request.getDoctorId()));
 
+        User createdBy = patient;
         DayOfWeek dayOfWeek = request.getStartTime().getDayOfWeek();
 
         List<DoctorAvailability> availabilities = doctorAvailabilityRepository
@@ -74,7 +76,9 @@ public class AppointmentBookingService {
             throw new AppointmentConflictException("Selected appointment slot is already booked");
         }
 
-        return null;
+        Appointment appointment = appointmentMapper.toEntity(request, patient, doctor, createdBy, endTime);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        return appointmentMapper.toResponse(savedAppointment);
     }
 
     private boolean supportsRequestedType(AvailabilityType availabilityType, AppointmentType requestedType) {
