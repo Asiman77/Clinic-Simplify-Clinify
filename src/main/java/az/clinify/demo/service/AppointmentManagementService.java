@@ -23,4 +23,11 @@ public class AppointmentManagementService {
                 .toList();
     }
 
+    @Transactional
+    public List<AppointmentResponseDTO> getByDoctor(Long doctorId) {
+        return appointmentRepository.findByDoctorId(doctorId).stream()
+                .map(appointmentMapper::toResponse)
+                .toList();
+    }
+
 }
