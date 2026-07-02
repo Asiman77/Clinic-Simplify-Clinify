@@ -37,7 +37,10 @@ public class AvailableSlotService {
         DayOfWeek dayOfWeek = date.getDayOfWeek();
 
         List<DoctorAvailability> availabilities = doctorAvailabilityRepository
-                .findByDoctorIdAndDayOfWeekAndActiveTrue(doctorId, dayOfWeek);
+                .findByDoctorIdAndDayOfWeekAndActiveTrue(doctorId, dayOfWeek)
+                .stream()
+                .filter(availability -> supportsRequestedType(availability.getAvailabilityType(), type))
+                .toList();
 
         LocalDateTime dayStart = date.atStartOfDay();
         LocalDateTime dayEnd = date.plusDays(1).atStartOfDay();
