@@ -46,4 +46,7 @@ public class MedicalRecordService {
 
         return medicalRecordMapper.toResponse(medicalRecordRepository.save(medicalRecord));
     }
+    public MedicalRecordResponseDTO setStatus(Long id, MedicalRecordStatusRequest request){
+
+    }
 }
