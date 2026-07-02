@@ -27,6 +27,11 @@ private final MedicalRecordService service;
         MedicalRecordResponseDTO response = service.setStatus(id,request);
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<MedicalRecordResponseDTO>getMedicalRecord(@PathVariable Long id){
+        MedicalRecordResponseDTO response = service.returnMedicalRecord(id);
+        return ResponseEntity.ok(response);
+    }
 
 
 
