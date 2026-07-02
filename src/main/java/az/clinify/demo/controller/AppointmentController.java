@@ -22,6 +22,12 @@ public class AppointmentController {
     private final AppointmentManagementService appointmentManagementService;
     private final AppointmentBookingService appointmentBookingService;
 
+    @GetMapping
+    public ResponseEntity<List<AppointmentResponseDTO>> getAllAppointments() {
+        return ResponseEntity.ok(appointmentManagementService.getAllAppointments());
+    }
+
+
     @PostMapping
     public ResponseEntity<AppointmentResponseDTO> createAppointment(
             @Valid @RequestBody AppointmentRequestDTO request) {
