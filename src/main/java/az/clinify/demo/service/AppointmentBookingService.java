@@ -16,8 +16,10 @@ import az.clinify.demo.dto.response.AppointmentResponseDTO;
 import az.clinify.demo.entity.DoctorAvailability;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.User;
+import az.clinify.demo.enums.AppointmentStatus;
 import az.clinify.demo.enums.AppointmentType;
 import az.clinify.demo.enums.AvailabilityType;
+import az.clinify.demo.exceptions.AppointmentConflictException;
 import az.clinify.demo.exceptions.DoctorNotAvailableException;
 import az.clinify.demo.exceptions.DoctorNotFoundException;
 import az.clinify.demo.exceptions.UserNotFoundException;
@@ -58,8 +60,20 @@ public class AppointmentBookingService {
                 .orElseThrow(() -> new DoctorNotAvailableException(
                         "Doctor is not available for the selected time and appointment type"));
 
-        LocalDateTime endTime = request.getStartTime()
-                .plusMinutes(matchedAvailability.getSlotDurationMinutes());
+        LocalDateTime endTime = request.getStartTime().plusMinutes(matchedAvailability.getSlotDurationMinutes());
+
+        List<AppointmentStatus> blockingStatuses = List.of(AppointmentStatus.REQUESTED, AppointmentStatus.APPROVED);
+
+        boolean hasConflict = appointmentRepository.existsConflictingAppointment(
+                doctor.getId(),
+                request.getStartTime(),
+                endTime,
+                blockingStatuses);
+
+        if (hasConflict) {
+            throw new AppointmentConflictException("Selected appointment slot is already booked");
+        }
+
         return null;
     }
 
