@@ -1,9 +1,14 @@
 package az.clinify.demo.controller;
 
+import az.clinify.demo.dto.request.AppointmentRequestDTO;
 import az.clinify.demo.dto.request.AppointmentStatusRequest;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
+import az.clinify.demo.service.AppointmentBookingService;
 import az.clinify.demo.service.AppointmentManagementService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +20,14 @@ import java.util.List;
 public class AppointmentController {
 
     private final AppointmentManagementService appointmentManagementService;
+    private final AppointmentBookingService appointmentBookingService;
+
+    @PostMapping
+    public ResponseEntity<AppointmentResponseDTO> createAppointment(
+            @Valid @RequestBody AppointmentRequestDTO request) {
+        AppointmentResponseDTO response = appointmentBookingService.createAppointment(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     /**
      * Returns all appointments belonging to the given patient.
