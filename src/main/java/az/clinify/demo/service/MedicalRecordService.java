@@ -46,7 +46,16 @@ public class MedicalRecordService {
 
         return medicalRecordMapper.toResponse(medicalRecordRepository.save(medicalRecord));
     }
-    public MedicalRecordResponseDTO setStatus(Long id, MedicalRecordStatusRequest request){
+    public MedicalRecordResponseDTO setStatus(Long id,MedicalRecordStatusRequest request){
+            MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
+                    .orElseThrow(() -> new MedicalRecordNotFoundException("not found"));
 
-    }
+            medicalRecord.setLabStatus(request.getLabStatus());
+            medicalRecord.setStatusUpdatedAt(LocalDateTime.now());
+            if (request.getTestName()!= null) {
+                medicalRecord.setTestName(request.getTestName());
+            }
+            return medicalRecordMapper.toResponse( medicalRecordRepository.save(medicalRecord));
+        }
+
 }
