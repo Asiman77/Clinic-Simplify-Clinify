@@ -4,6 +4,7 @@ import az.clinify.demo.dto.request.MedicalRecordRequestDTO;
 import az.clinify.demo.dto.request.MedicalRecordStatusRequest;
 import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
+import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.entity.User;
@@ -14,14 +15,15 @@ import az.clinify.demo.mapper.MedicalRecordMapper;
 import az.clinify.demo.repository.DoctorProfileRepository;
 import az.clinify.demo.repository.MedicalRecordRepository;
 import az.clinify.demo.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -93,6 +95,11 @@ public class MedicalRecordService {
         return medicalRecordRepository.save(record);
     }
 
+    @Transactional(readOnly = true)
+    public List<MedicalRecordSummaryDto> getPatientMedicalRecords(Long patientId) {
+
+        return medicalRecordRepository.findAllSummaryByPatientId(patientId);
+    }
 
 
 }
