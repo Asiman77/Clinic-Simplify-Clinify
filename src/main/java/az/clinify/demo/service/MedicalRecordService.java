@@ -2,7 +2,9 @@ package az.clinify.demo.service;
 
 import az.clinify.demo.dto.request.MedicalRecordRequestDTO;
 import az.clinify.demo.dto.request.MedicalRecordStatusRequest;
+import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
+import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.entity.User;
@@ -15,9 +17,13 @@ import az.clinify.demo.repository.MedicalRecordRepository;
 import az.clinify.demo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -62,5 +68,38 @@ public class MedicalRecordService {
                 .orElseThrow(() -> new MedicalRecordNotFoundException("not found"));
         return medicalRecordMapper.toResponse(medicalRecord);
     }
+
+    @Transactional
+    public MedicalRecord updateMedicalRecord(Long recordId, UpdateMedicalRecordRequest dto, String currentDoctorFin) {
+
+        MedicalRecord record = medicalRecordRepository.findById(recordId)
+                .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record did not found"));
+
+
+        String recordDoctorUsername = record.getDoctor().getUser().getFin(); 
+        
+        if (!recordDoctorUsername.equals(currentDoctorFin)) {
+            throw new AccessDeniedException("you can not edit this medical record!");
+        }
+
+        record.setDiagnosis(dto.getDiagnosis());
+        record.setSymptoms(dto.getSymptoms());
+        record.setReceipt(dto.getReceipt());
+        record.setTestName(dto.getTestName());
+
+        if (record.getLabStatus() != dto.getLabStatus()) {
+            record.setLabStatus(dto.getLabStatus());
+            record.setStatusUpdatedAt(LocalDateTime.now());
+        }
+
+        return medicalRecordRepository.save(record);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MedicalRecordSummaryDto> getPatientMedicalRecords(Long patientId) {
+
+        return medicalRecordRepository.findAllSummaryByPatientId(patientId);
+    }
+
 
 }
