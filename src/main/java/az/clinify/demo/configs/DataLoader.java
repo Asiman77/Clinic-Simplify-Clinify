@@ -1,7 +1,7 @@
 package az.clinify.demo.configs;
 
-
 import az.clinify.demo.entity.Role;
+import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.RoleType;
 import az.clinify.demo.repository.RoleRepository;
 import az.clinify.demo.repository.UserRepository;
@@ -11,17 +11,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.Set;
+
 @Component
 @RequiredArgsConstructor
-
 public class DataLoader implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
-
     private final UserRepository userRepository;
-
     private final BCryptPasswordEncoder passwordEncoder;
-
 
     @Override
     @Transactional
@@ -33,5 +32,25 @@ public class DataLoader implements CommandLineRunner {
                     return roleRepository.save(role);
                 });
 
+        String adminFin = "ADM0001";
+        String adminEmail = "admin@clinify.az";
+
+        if (userRepository.existsByFin(adminFin) || userRepository.existsByEmail(adminEmail)) {
+            return;
+        }
+
+        User admin = new User();
+        admin.setFin(adminFin);
+        admin.setFirstName("System");
+        admin.setLastName("Admin");
+        admin.setGender("MALE");
+        admin.setBirthDate(LocalDate.of(1990, 1, 1));
+        admin.setPhoneNumber("+994500000001");
+        admin.setEmail(adminEmail);
+        admin.setPassword(passwordEncoder.encode("Admin123!"));
+        admin.setHasAccount(true);
+        admin.setRoles(Set.of(superAdminRole));
+
+        userRepository.save(admin);
     }
 }
