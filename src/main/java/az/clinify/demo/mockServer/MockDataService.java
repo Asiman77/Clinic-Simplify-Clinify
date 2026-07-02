@@ -13,7 +13,7 @@ public class MockDataService {
 
     private final MockDataRepository mockDataRepository;
 
-    public void verifySignature(String fin, String incomingSignature) {
+    public boolean verifySignature(String fin, String incomingSignature) {
     if (fin == null || incomingSignature == null) {
         throw new IllegalArgumentException("FIN və ya imza boş ola bilməz!");
     }
@@ -26,5 +26,6 @@ public class MockDataService {
     if (!mockData.getPassword().equals(incomingSignature)) {
         throw new BadCredentialsException("Daxil edilən imza/parol yanlışdır!");
     }
+    return true;
 }
 }

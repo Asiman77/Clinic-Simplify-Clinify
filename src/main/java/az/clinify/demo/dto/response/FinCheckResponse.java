@@ -9,9 +9,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FinCheckResponse {
 
-
     private String fin;
-
     private String status;
     private String message;
 
