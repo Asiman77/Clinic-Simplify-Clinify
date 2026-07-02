@@ -22,4 +22,9 @@ public class AppointmentController {
     public ResponseEntity<List<AppointmentResponseDTO>> getByPatient(@PathVariable Long patientId) {
         return ResponseEntity.ok(appointmentManagementService.getByPatient(patientId));
     }
+
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<AppointmentResponseDTO>> getByDoctor(@PathVariable Long doctorId) {
+        return ResponseEntity.ok(appointmentManagementService.getByDoctor(doctorId));
+    }
 }
