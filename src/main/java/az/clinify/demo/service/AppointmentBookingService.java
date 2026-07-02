@@ -18,6 +18,7 @@ import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.AppointmentType;
 import az.clinify.demo.enums.AvailabilityType;
+import az.clinify.demo.exceptions.DoctorNotAvailableException;
 import az.clinify.demo.exceptions.DoctorNotFoundException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.AppointmentMapper;
@@ -46,9 +47,19 @@ public class AppointmentBookingService {
 
         DayOfWeek dayOfWeek = request.getStartTime().getDayOfWeek();
 
-        List<DoctorAvailability> availability = doctorAvailabilityRepository
+        List<DoctorAvailability> availabilities = doctorAvailabilityRepository
                 .findByDoctorIdAndDayOfWeekAndActiveTrue(doctor.getId(), dayOfWeek);
 
+        DoctorAvailability matchedAvailability = availabilities.stream()
+                .filter(availability -> supportsRequestedType(availability.getAvailabilityType(), request.getType()))
+                .filter(availability -> isStartTimeInsideAvailability(request.getStartTime(), availability))
+                .filter(availability -> isStartTimeAlignedWithSlotDuration(request.getStartTime(), availability))
+                .findFirst()
+                .orElseThrow(() -> new DoctorNotAvailableException(
+                        "Doctor is not available for the selected time and appointment type"));
+
+        LocalDateTime endTime = request.getStartTime()
+                .plusMinutes(matchedAvailability.getSlotDurationMinutes());
         return null;
     }
 
