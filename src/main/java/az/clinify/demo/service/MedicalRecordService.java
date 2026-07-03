@@ -65,7 +65,7 @@ public class MedicalRecordService {
         }
     public MedicalRecordResponseDTO returnMedicalRecord(Long id){
         MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
-                .orElseThrow(() -> new MedicalRecordNotFoundException("not found"));
+                .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record not found"));
         return medicalRecordMapper.toResponse(medicalRecord);
     }
 
