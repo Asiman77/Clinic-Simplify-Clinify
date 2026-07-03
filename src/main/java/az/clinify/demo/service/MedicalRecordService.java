@@ -69,31 +69,41 @@ public class MedicalRecordService {
         return medicalRecordMapper.toResponse(medicalRecord);
     }
 
-    @Transactional
+   @Transactional
     public MedicalRecord updateMedicalRecord(Long recordId, UpdateMedicalRecordRequest dto, String currentDoctorFin) {
 
         MedicalRecord record = medicalRecordRepository.findById(recordId)
                 .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record did not found"));
 
+        String recordDoctorFin = record.getDoctor().getUser().getFin();
 
-        String recordDoctorUsername = record.getDoctor().getUser().getFin(); 
-        
-        if (!recordDoctorUsername.equals(currentDoctorFin)) {
-            throw new AccessDeniedException("you can not edit this medical record!");
+        if (!recordDoctorFin.equals(currentDoctorFin)) {
+            throw new AccessDeniedException("You can not edit this medical record!");
         }
 
-        record.setDiagnosis(dto.getDiagnosis());
-        record.setSymptoms(dto.getSymptoms());
-        record.setReceipt(dto.getReceipt());
-        record.setTestName(dto.getTestName());
+        if (dto.getDiagnosis() != null && !dto.getDiagnosis().trim().isEmpty()) {
+            record.setDiagnosis(dto.getDiagnosis());
+        }
 
-        if (record.getLabStatus() != dto.getLabStatus()) {
+        if (dto.getSymptoms() != null) {
+            record.setSymptoms(dto.getSymptoms());
+        }
+
+        if (dto.getReceipt() != null) {
+            record.setReceipt(dto.getReceipt());
+        }
+
+        if (dto.getTestName() != null) {
+            record.setTestName(dto.getTestName());
+        }
+
+        if (dto.getLabStatus() != null && record.getLabStatus() != dto.getLabStatus()) {
             record.setLabStatus(dto.getLabStatus());
             record.setStatusUpdatedAt(LocalDateTime.now());
         }
-
         return medicalRecordRepository.save(record);
     }
+
 
     @Transactional(readOnly = true)
     public List<MedicalRecordSummaryDto> getPatientMedicalRecords(Long patientId) {
