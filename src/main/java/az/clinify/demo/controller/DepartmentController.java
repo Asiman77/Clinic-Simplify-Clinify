@@ -12,12 +12,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/departments")
 public class DepartmentController {
 
     private final DepartmentService departmentService;
+
+
+    @GetMapping
+    public ResponseEntity<List<DepartmentResponse>> getAllDepartments() {
+        List<DepartmentResponse> response = departmentService.getAllDepartments();
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
