@@ -29,6 +29,13 @@ public class DepartmentController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<DepartmentResponse> getDepartmentById(@PathVariable Long id) {
+        DepartmentResponse response = departmentService.getDepartmentById(id);
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DepartmentResponse> createDepartment(
