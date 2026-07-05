@@ -71,6 +71,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/activate").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/deactivate").hasRole("ADMIN")
 
+
+                        .requestMatchers(HttpMethod.GET, "/api/availabilities").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/availabilities/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/availabilities").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/availabilities/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/availabilities/*/status").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/availabilities/**").hasAnyRole("ADMIN", "DOCTOR")
+
+
                         .anyRequest().permitAll());
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
