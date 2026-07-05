@@ -86,10 +86,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
                         .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/status").hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
 
-                        .requestMatchers(HttpMethod.GET, "api/records/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "LAB_TECHNICIAN")
-                        .requestMatchers(HttpMethod.POST, "api/records").hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers(HttpMethod.PUT, "api/records/**").hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers(HttpMethod.PATCH, "api/records/*/status").hasAnyRole("ADMIN", "DOCTOR", "LAB_TECHNICIAN")
+                        .requestMatchers(HttpMethod.GET, "/api/records/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "LAB_TECHNICIAN")
+                        .requestMatchers(HttpMethod.POST, "/api/records").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/records/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/records/*/status").hasAnyRole("ADMIN", "DOCTOR", "LAB_TECHNICIAN")
 
                         .anyRequest().permitAll());
 
