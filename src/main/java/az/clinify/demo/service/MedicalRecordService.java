@@ -8,6 +8,7 @@ import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.entity.User;
+import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.exceptions.DoctorNotFoundException;
 import az.clinify.demo.exceptions.MedicalRecordNotFoundException;
 import az.clinify.demo.exceptions.UserNotFoundException;
@@ -39,6 +40,7 @@ public class MedicalRecordService {
                 .orElseThrow(() -> new UserNotFoundException("Patient not found"));
         DoctorProfile doctor = doctorProfileRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
         MedicalRecord medicalRecord = new MedicalRecord();
         medicalRecord.setPatient(patient);
         medicalRecord.setDoctor(doctor);
@@ -46,9 +48,12 @@ public class MedicalRecordService {
         medicalRecord.setSymptoms(request.getSymptoms());
         medicalRecord.setReceipt(request.getReceipt());
         medicalRecord.setRecordDate(LocalDateTime.now());
-        medicalRecord.setLabStatus(request.getLabStatus());
         medicalRecord.setStatusUpdatedAt(LocalDateTime.now());
         medicalRecord.setTestName(request.getTestName());
+        medicalRecord.setLabStatus( request.getTestName() != null && !request.getTestName().isBlank()
+                ? LabStatuses.PENDING
+                : LabStatuses.NOT_REQUIRED);
+
 
         return medicalRecordMapper.toResponse(medicalRecordRepository.save(medicalRecord));
     }
