@@ -5,5 +5,6 @@ public enum LabStatuses {
     REQUESTED,
     IN_PROGRESS,
     COMPLETED,
-    CANCELLED
+    CANCELLED,
+    PENDING
 }
