@@ -64,6 +64,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/departments/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/departments/**").hasRole("ADMIN")
 
+                        .requestMatchers(HttpMethod.GET, "/api/doctors").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/doctors/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/doctors").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/doctors/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/activate").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/deactivate").hasRole("ADMIN")
 
                         .anyRequest().permitAll());
 
