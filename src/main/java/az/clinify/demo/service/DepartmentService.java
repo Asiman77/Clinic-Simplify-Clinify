@@ -30,6 +30,14 @@ public class DepartmentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public DepartmentResponse getDepartmentById(Long id) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new DepartmentNotFoundException(id));
+
+        return departmentMapper.toResponse(department);
+    }
+
 
     @Transactional
     public DepartmentResponse createDepartment(CreateDepartmentRequest request) {
