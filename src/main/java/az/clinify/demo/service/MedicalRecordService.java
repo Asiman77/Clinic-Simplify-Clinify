@@ -35,6 +35,7 @@ public class MedicalRecordService {
     private final MedicalRecordMapper medicalRecordMapper;
 
 
+    @Transactional
     public MedicalRecordResponseDTO CreateMedicalRecord(MedicalRecordRequestDTO request){
         User patient = userRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new UserNotFoundException("Patient not found"));
@@ -54,20 +55,33 @@ public class MedicalRecordService {
                 ? LabStatuses.PENDING
                 : LabStatuses.NOT_REQUIRED);
 
-
         return medicalRecordMapper.toResponse(medicalRecordRepository.save(medicalRecord));
     }
+    @Transactional
     public MedicalRecordResponseDTO setStatus(Long id,MedicalRecordStatusRequest request){
             MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
                     .orElseThrow(() -> new MedicalRecordNotFoundException("not found"));
 
+             if (request.getTestName() != null) {
+            medicalRecord.setTestName(request.getTestName());
+              }
+
+            if (request.getLabStatus() != null) {
             medicalRecord.setLabStatus(request.getLabStatus());
-            medicalRecord.setStatusUpdatedAt(LocalDateTime.now());
-            if (request.getTestName()!= null) {
-                medicalRecord.setTestName(request.getTestName());
             }
-            return medicalRecordMapper.toResponse( medicalRecordRepository.save(medicalRecord));
+
+            else if (request.getTestName() != null) {
+            medicalRecord.setLabStatus(
+                    !request.getTestName().isBlank()
+                            ? LabStatuses.PENDING
+                            : LabStatuses.NOT_REQUIRED
+            );
         }
+
+        medicalRecord.setLabStatus(request.getLabStatus());
+        return medicalRecordMapper.toResponse( medicalRecordRepository.save(medicalRecord));
+        }
+
     public MedicalRecordResponseDTO returnMedicalRecord(Long id){
         MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
                 .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record not found"));
@@ -76,7 +90,6 @@ public class MedicalRecordService {
 
    @Transactional
     public MedicalRecord updateMedicalRecord(Long recordId, UpdateMedicalRecordRequest dto, String currentDoctorFin) {
-
         MedicalRecord record = medicalRecordRepository.findById(recordId)
                 .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record did not found"));
 
@@ -109,12 +122,9 @@ public class MedicalRecordService {
         return medicalRecordRepository.save(record);
     }
 
-
     @Transactional(readOnly = true)
     public List<MedicalRecordSummaryDto> getPatientMedicalRecords(Long patientId) {
-
         return medicalRecordRepository.findAllSummaryByPatientId(patientId);
     }
-
 
 }
