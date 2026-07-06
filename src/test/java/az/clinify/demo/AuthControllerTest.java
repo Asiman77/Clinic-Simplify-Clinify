@@ -69,4 +69,28 @@ class AuthControllerTest {
         verify(authService).checkFin(any(FinCheckRequest.class));
     }
 
+    @Test
+    void login_ShouldReturnOk_WhenCredentialsAreValid() throws Exception {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setFin("7654321");
+        request.setPassword("correctPassword");
+
+        AuthResponse response = new AuthResponse();
+        response.setToken("mocked-jwt-token");
+        response.setFin("7654321");
+        response.setRoles(Set.of("USER"));
+
+        when(authService.login(any(AuthRequestDTO.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("mocked-jwt-token"))
+                .andExpect(jsonPath("$.fin").value("7654321"))
+                .andExpect(jsonPath("$.roles[0]").value("USER"));
+
+        verify(authService).login(any(AuthRequestDTO.class));
+    }
+
 }
