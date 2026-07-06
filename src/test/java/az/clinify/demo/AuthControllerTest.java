@@ -118,6 +118,23 @@ class AuthControllerTest {
 
         verify(authService).registerFromMock(any(AuthRequestDTO.class));
     }
+    @Test
+    void setupPassword_ShouldReturnSuccessMessage_WhenDataIsValid() throws Exception {
+        PasswordSetupRequest request = new PasswordSetupRequest();
+        request.setFin("8888888");
+        request.setPassword("newPassword123");
+
+        String expectedMessage = "Account created successfully! Please proceed to the login page.";
+        when(authService.setupPassword(any(PasswordSetupRequest.class))).thenReturn(expectedMessage);
+
+        mockMvc.perform(post("/api/auth/register/setup-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectedMessage));
+
+        verify(authService).setupPassword(any(PasswordSetupRequest.class));
+    }
 
 
 }
