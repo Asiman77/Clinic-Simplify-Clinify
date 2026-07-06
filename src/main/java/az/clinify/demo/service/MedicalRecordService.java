@@ -1,22 +1,20 @@
 package az.clinify.demo.service;
 
 import az.clinify.demo.dto.request.MedicalRecordRequestDTO;
-import az.clinify.demo.dto.request.MedicalRecordStatusRequest;
 import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
 import az.clinify.demo.entity.DoctorProfile;
+import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.LabStatuses;
-import az.clinify.demo.exceptions.DoctorNotFoundException;
 import az.clinify.demo.exceptions.MedicalRecordNotFoundException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.MedicalRecordMapper;
 import az.clinify.demo.repository.DoctorProfileRepository;
 import az.clinify.demo.repository.MedicalRecordRepository;
 import az.clinify.demo.repository.UserRepository;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.access.AccessDeniedException;
@@ -34,9 +32,8 @@ public class MedicalRecordService {
     private final DoctorProfileRepository doctorProfileRepository;
     private final MedicalRecordMapper medicalRecordMapper;
 
-
     @Transactional
-    public MedicalRecordResponseDTO CreateMedicalRecord(MedicalRecordRequestDTO request){
+    public MedicalRecordResponseDTO CreateMedicalRecord(MedicalRecordRequestDTO request) {
         User patient = userRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new UserNotFoundException("Patient not found"));
         DoctorProfile doctor = doctorProfileRepository.findById(1L)
@@ -49,46 +46,29 @@ public class MedicalRecordService {
         medicalRecord.setSymptoms(request.getSymptoms());
         medicalRecord.setReceipt(request.getReceipt());
         medicalRecord.setRecordDate(LocalDateTime.now());
-        medicalRecord.setStatusUpdatedAt(LocalDateTime.now());
-        medicalRecord.setTestName(request.getTestName());
-        medicalRecord.setLabStatus( request.getTestName() != null && !request.getTestName().isBlank()
-                ? LabStatuses.PENDING
-                : LabStatuses.NOT_REQUIRED);
+
+        if (request.getLabTests() != null && !request.getLabTests().isEmpty()) {
+            request.getLabTests().forEach(labTest -> {
+                LabResponse labResponse = new LabResponse();
+                labResponse.setMedicalRecord(medicalRecord);
+                labResponse.setTestName(labTest.getTestName());
+                labResponse.setNote(labTest.getNote());
+                labResponse.setStatus(LabStatuses.PENDING);
+
+                medicalRecord.getLabResponses().add(labResponse);
+            });
+        }
 
         return medicalRecordMapper.toResponse(medicalRecordRepository.save(medicalRecord));
     }
-    @Transactional
-    public MedicalRecordResponseDTO setStatus(Long id,MedicalRecordStatusRequest request){
-            MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
-                    .orElseThrow(() -> new MedicalRecordNotFoundException("not found"));
 
-             if (request.getTestName() != null) {
-            medicalRecord.setTestName(request.getTestName());
-              }
-
-            if (request.getLabStatus() != null) {
-            medicalRecord.setLabStatus(request.getLabStatus());
-            }
-
-            else if (request.getTestName() != null) {
-            medicalRecord.setLabStatus(
-                    !request.getTestName().isBlank()
-                            ? LabStatuses.PENDING
-                            : LabStatuses.NOT_REQUIRED
-            );
-        }
-
-        medicalRecord.setLabStatus(request.getLabStatus());
-        return medicalRecordMapper.toResponse( medicalRecordRepository.save(medicalRecord));
-        }
-
-    public MedicalRecordResponseDTO returnMedicalRecord(Long id){
+    public MedicalRecordResponseDTO returnMedicalRecord(Long id) {
         MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
                 .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record not found"));
         return medicalRecordMapper.toResponse(medicalRecord);
     }
 
-   @Transactional
+    @Transactional
     public MedicalRecord updateMedicalRecord(Long recordId, UpdateMedicalRecordRequest dto, String currentDoctorFin) {
         MedicalRecord record = medicalRecordRepository.findById(recordId)
                 .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record did not found"));
@@ -111,14 +91,6 @@ public class MedicalRecordService {
             record.setReceipt(dto.getReceipt());
         }
 
-        if (dto.getTestName() != null) {
-            record.setTestName(dto.getTestName());
-        }
-
-        if (dto.getLabStatus() != null && record.getLabStatus() != dto.getLabStatus()) {
-            record.setLabStatus(dto.getLabStatus());
-            record.setStatusUpdatedAt(LocalDateTime.now());
-        }
         return medicalRecordRepository.save(record);
     }
 
