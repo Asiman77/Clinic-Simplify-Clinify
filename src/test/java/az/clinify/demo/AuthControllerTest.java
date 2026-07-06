@@ -92,5 +92,32 @@ class AuthControllerTest {
 
         verify(authService).login(any(AuthRequestDTO.class));
     }
+    @Test
+    void verifyAndRegister_ShouldReturnOk_WhenSignatureIsValid() throws Exception {
+        AuthRequestDTO request = new AuthRequestDTO();
+        request.setFin("9999999");
+        request.setPassword("signature_data");
+
+        RegisterVerifyResponse response = new RegisterVerifyResponse(
+                "9999999",
+                true,
+                "Signature verified successfully. Please proceed to setup your password.",
+                "SETUP_PASSWORD_REQUIRED"
+        );
+
+        when(authService.registerFromMock(any(AuthRequestDTO.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/auth/register/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fin").value("9999999"))
+                .andExpect(jsonPath("$.verified").value(true))
+                .andExpect(jsonPath("$.message").value("Signature verified successfully. Please proceed to setup your password."))
+                .andExpect(jsonPath("$.status").value("SETUP_PASSWORD_REQUIRED"));
+
+        verify(authService).registerFromMock(any(AuthRequestDTO.class));
+    }
+
 
 }
