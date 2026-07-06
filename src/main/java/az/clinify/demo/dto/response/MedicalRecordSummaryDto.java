@@ -13,6 +13,5 @@ import lombok.Setter;
 public class MedicalRecordSummaryDto {
     private Long id;
     private String diagnosis;
-    private LabStatuses labStatus;
-    private LocalDateTime statusUpdatedAt;
+    private LocalDateTime recordDate;
 }
