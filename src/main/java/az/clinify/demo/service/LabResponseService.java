@@ -1,9 +1,11 @@
 package az.clinify.demo.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
@@ -15,6 +17,7 @@ import az.clinify.demo.exceptions.InvalidStatusException;
 import az.clinify.demo.exceptions.LabResponseNotFoundException;
 import az.clinify.demo.mapper.LabResponseMapper;
 import az.clinify.demo.repository.LabResponseRepository;
+import az.clinify.demo.valueobject.LabResponseFileMetadata;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -23,6 +26,7 @@ public class LabResponseService {
 
     private final LabResponseRepository labResponseRepository;
     private final LabResponseMapper labResponseMapper;
+    private final CloudinaryUploadService cloudinaryUploadService;
 
     @Transactional(readOnly = true)
     public LabResponseResponseDTO getLabResponseById(Long id) {
@@ -72,6 +76,20 @@ public class LabResponseService {
         validateCompletedStatus(labResponse, request.getStatus());
 
         labResponse.setStatus(request.getStatus());
+
+        return labResponseMapper.toResponse(labResponseRepository.save(labResponse));
+    }
+
+    @Transactional
+    public LabResponseResponseDTO uploadLabResponseFile(Long id, MultipartFile file) {
+        LabResponse labResponse = getLabResponseEntityById(id);
+        LabResponseFileMetadata fileMetadata = cloudinaryUploadService.uploadLabResponseFile(id, file);
+
+        if (labResponse.getFiles() == null) {
+            labResponse.setFiles(new ArrayList<>());
+        }
+
+        labResponse.getFiles().add(fileMetadata);
 
         return labResponseMapper.toResponse(labResponseRepository.save(labResponse));
     }
