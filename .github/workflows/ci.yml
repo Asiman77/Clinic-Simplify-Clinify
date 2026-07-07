@@ -7,10 +7,23 @@ on:
     branches: [main]
 
 jobs:
-      build-and-test:
-        runs-on: ubuntu-latest
+  build-and-test:
+    runs-on: ubuntu-latest
 
-        steps:
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: clinify_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
           - uses: actions/checkout@v4
 
           - name: Set up JDK 17
@@ -26,7 +39,21 @@ jobs:
               key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
               restore-keys: ${{ runner.os }}-maven-
 
+          - name: Wait for MySQL
+            run: |
+                until mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do
+                  echo "Waiting for MySQL..."
+                  sleep 2
+                done
           - name: Build and test
             run: mvn clean verify
             env:
               SPRING_PROFILES_ACTIVE: test
+              DB_URL: jdbc:mysql://127.0.0.1:3306/clinify_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+              DB_USERNAME: root
+              DB_PASSWORD: root
+              JWT_SECRET: ${{ secrets.JWT_SECRET }}
+              SMS_API_KEY: ${{ secrets.SMS_API_KEY }}
+              CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+              CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+              CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
