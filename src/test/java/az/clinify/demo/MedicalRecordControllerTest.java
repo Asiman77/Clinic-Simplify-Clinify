@@ -22,7 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,9 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import az.clinify.demo.dto.request.MedicalRecordStatusRequest;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
+import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -335,5 +337,81 @@ class MedicalRecordControllerTest {
 
         verify(medicalRecordService, never())
                 .getPatientMedicalRecords(any());
+    }
+
+    @Test
+    void updateRecord_ShouldReturnOk_WhenDoctor() throws Exception {
+
+        UpdateMedicalRecordRequest request =
+                new UpdateMedicalRecordRequest(
+                        "Updated Diagnosis",
+                        "Updated Symptoms",
+                        "Updated Receipt",
+                        LabStatuses.COMPLETED,
+                        "Blood Test"
+                );
+
+        when(medicalRecordService.updateMedicalRecord(
+                eq(1L),
+                any(UpdateMedicalRecordRequest.class),
+                anyString()
+        )).thenReturn(sampleMedicalRecord());
+
+        mockMvc.perform(
+                        put("/api/records/{id}", 1L)
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "doctor",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_DOCTOR")
+                                                )
+                                        )
+                                ))
+                                .principal(() -> "doctor")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk());
+
+        verify(medicalRecordService)
+                .updateMedicalRecord(
+                        eq(1L),
+                        any(UpdateMedicalRecordRequest.class),
+                        eq("doctor")
+                );
+    }
+
+    @Test
+    void updateRecord_ShouldReturnForbidden_WhenPatient() throws Exception {
+
+        UpdateMedicalRecordRequest request =
+                new UpdateMedicalRecordRequest(
+                        "Updated Diagnosis",
+                        "Updated Symptoms",
+                        "Updated Receipt",
+                        LabStatuses.COMPLETED,
+                        "Blood Test"
+                );
+
+        mockMvc.perform(
+                        put("/api/records/{id}", 1L)
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "patient",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_PATIENT")
+                                                )
+                                        )
+                                ))
+                                .principal(() -> "patient")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden());
+
+        verify(medicalRecordService, never())
+                .updateMedicalRecord(any(), any(), anyString());
     }
 }
