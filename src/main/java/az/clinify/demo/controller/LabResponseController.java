@@ -6,10 +6,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
@@ -58,5 +61,12 @@ public class LabResponseController {
             @Valid @RequestBody LabResponseStatusRequest request) {
         return ResponseEntity.ok(
                 labResponseService.updateLabResponseStatus(id, request));
+    }
+
+    @PostMapping("/{id}/files")
+    public ResponseEntity<LabResponseResponseDTO> uploadLabResponseFile(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(labResponseService.uploadLabResponseFile(id, file));
     }
 }
