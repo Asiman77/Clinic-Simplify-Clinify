@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import az.clinify.demo.dto.request.UpdateLabResponseRequest;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.enums.LabStatuses;
@@ -40,6 +41,27 @@ public class LabResponseService {
                 .stream()
                 .map(labResponseMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public LabResponseResponseDTO updateLabResponse(Long id, UpdateLabResponseRequest request) {
+        LabResponse labResponse = getLabResponseEntityById(id);
+
+        if (request.getResultText() != null) {
+            labResponse.setResultText(request.getResultText());
+        }
+
+        if (request.getNote() != null) {
+            labResponse.setNote(request.getNote());
+        }
+
+        if (request.getStatus() != null) {
+            validateStatusUpdate(labResponse, request.getStatus());
+            validateCompletedStatus(labResponse, request.getStatus());
+            labResponse.setStatus(request.getStatus());
+        }
+
+        return labResponseMapper.toResponse(labResponseRepository.save(labResponse));
     }
 
     private LabResponse getLabResponseEntityById(Long id) {
