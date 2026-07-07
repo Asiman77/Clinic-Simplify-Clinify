@@ -179,6 +179,25 @@ class AppointmentControllerTest {
                 .getByDoctor(20L);
     }
 
+    @Test
+    void getByPatient_ShouldReturnOk() throws Exception {
+
+        when(appointmentManagementService.getByPatient(10L))
+                .thenReturn(List.of(sampleResponse()));
+
+        mockMvc.perform(get("/api/appointments/patient/{id}", 10L)
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "patient",
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].patientId").value(10));
+
+        verify(appointmentManagementService)
+                .getByPatient(10L);
+    }
+
 
     @Test
     @WithMockUser(roles = "PATIENT")
