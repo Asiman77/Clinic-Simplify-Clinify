@@ -31,7 +31,7 @@ public class MockData {
     @Column(nullable = false)
     private LocalDate birthDate;
 
-    @Column(nullable = false)// lets imagine this as a signature yet
+    @Column(nullable = false)
     private String password;
 
 }
