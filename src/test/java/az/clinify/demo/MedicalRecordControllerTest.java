@@ -32,6 +32,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import az.clinify.demo.dto.request.MedicalRecordStatusRequest;
+
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -208,6 +212,73 @@ class MedicalRecordControllerTest {
 
         verify(medicalRecordService)
                 .returnMedicalRecord(1L);
+    }
+
+    @Test
+    void updateStatus_ShouldReturnOk_WhenLabTechnician() throws Exception {
+
+        MedicalRecordStatusRequest request =
+                new MedicalRecordStatusRequest(
+                        LabStatuses.COMPLETED,
+                        "Blood Test"
+                );
+
+        MedicalRecordResponseDTO response = sampleResponse();
+        response.setLabStatus(LabStatuses.COMPLETED);
+
+        when(medicalRecordService.setStatus(
+                eq(1L),
+                any(MedicalRecordStatusRequest.class)
+        )).thenReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/records/{id}/status", 1L)
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "lab",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_LAB_TECHNICIAN")
+                                                )
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.labStatus").value("COMPLETED"));
+
+        verify(medicalRecordService)
+                .setStatus(eq(1L), any(MedicalRecordStatusRequest.class));
+    }
+
+    @Test
+    void updateStatus_ShouldReturnForbidden_WhenPatient() throws Exception {
+
+        MedicalRecordStatusRequest request =
+                new MedicalRecordStatusRequest(
+                        LabStatuses.COMPLETED,
+                        "Blood Test"
+                );
+
+        mockMvc.perform(
+                        patch("/api/records/{id}/status", 1L)
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "patient",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_PATIENT")
+                                                )
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden());
+
+        verify(medicalRecordService, never())
+                .setStatus(any(), any());
     }
 
 }
