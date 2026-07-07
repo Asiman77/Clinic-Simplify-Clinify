@@ -1,6 +1,5 @@
 package az.clinify.demo.mapper;
 
-import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.MedicalRecord;
