@@ -276,6 +276,78 @@ class AppointmentControllerTest {
                 .createAppointment(any());
     }
 
+    @Test
+    void updateStatus_ShouldReturnOk_WhenDoctor() throws Exception {
+
+        AppointmentStatusRequest request =
+                new AppointmentStatusRequest(
+                        AppointmentStatus.APPROVED
+                );
+
+
+        AppointmentResponseDTO response = sampleResponse();
+        response.setStatus(AppointmentStatus.APPROVED);
+
+
+        when(appointmentManagementService.updateStatus(
+                eq(1L),
+                any(AppointmentStatusRequest.class)
+        )).thenReturn(response);
+
+
+        mockMvc.perform(
+                        patch("/api/appointments/{id}/status", 1L)
+                                .with(csrf())
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "doctor",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_DOCTOR")
+                                                )
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("APPROVED"));
+
+
+        verify(appointmentManagementService)
+                .updateStatus(eq(1L), any(AppointmentStatusRequest.class));
+    }
+
+
+
+    @Test
+    void updateStatus_ShouldReturnForbidden_WhenPatient() throws Exception {
+
+        AppointmentStatusRequest request =
+                new AppointmentStatusRequest(AppointmentStatus.APPROVED);
+
+        mockMvc.perform(
+                        patch("/api/appointments/{id}/status", 1L)
+                                .with(csrf())
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "patient",
+                                                null,
+                                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden());
+
+
+        verify(appointmentManagementService, never())
+                .updateStatus(any(), any());
+    }
+
 }
+
+
 
 
