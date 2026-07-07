@@ -284,6 +284,65 @@ class DoctorAvailabilityControllerTest {
         verify(availabilityService, never()).updateDoctorAvailability(anyLong(), any());
     }
 
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void updateAvailability_wrongRole_returnsForbidden() throws Exception {
+        UpdateDoctorAvailabilityRequest request = buildUpdateRequest();
+
+        mockMvc.perform(put("/api/availabilities/{id}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(availabilityService, never()).updateDoctorAvailability(anyLong(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateAvailabilityStatus_validRequest_returnsOk() throws Exception {
+        DoctorAvailabilityResponse response = buildResponse(1L);
+        response.setActive(false);
+
+        when(availabilityService.updateAvailabilityStatus(1L, false)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/availabilities/{id}/status", 1L)
+                        .param("active", "false")
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "admin", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(response)))
+
+
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        verify(availabilityService, times(1)).updateAvailabilityStatus(1L, false);
+    }
+    @Test
+    @WithMockUser(roles = "DOCTOR")
+    void updateAvailabilityStatus_missingParam_returnsBadRequest() throws Exception {
+        UpdateDoctorAvailabilityRequest request = buildUpdateRequest();
+
+        mockMvc.perform(patch("/api/availabilities/{id}/status", 1L)
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "doctor", null, List.of(new SimpleGrantedAuthority("ROLE_DOCTOR")))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verify(availabilityService, never()).updateAvailabilityStatus(anyLong(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void updateAvailabilityStatus_wrongRole_returnsForbidden() throws Exception {
+        mockMvc.perform(patch("/api/availabilities/{id}/status", 1L)
+                        .param("active", "false"))
+                .andExpect(status().isForbidden());
+
+        verify(availabilityService, never()).updateAvailabilityStatus(anyLong(), any());
+    }
+
 
 
 
