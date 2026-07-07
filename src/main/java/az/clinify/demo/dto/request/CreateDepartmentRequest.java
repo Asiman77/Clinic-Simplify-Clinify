@@ -9,8 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class CreateDepartmentRequest {
 
     @NotBlank(message = "Department name is required")
@@ -22,4 +21,9 @@ public class CreateDepartmentRequest {
 
     private Boolean active;
 
+    public CreateDepartmentRequest(String name, String description, Boolean active) {
+        this.name = name;
+        this.description = description;
+        this.active = active;
+    }
 }

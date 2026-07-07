@@ -1,14 +1,9 @@
 package az.clinify.demo.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class DepartmentResponse {
 
     private Long id;
@@ -18,5 +13,16 @@ public class DepartmentResponse {
     private String description;
 
     private Boolean active;
+
+    public DepartmentResponse(Long id, String name, String description, Boolean active) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.active = active;
+    }
+
+    public DepartmentResponse() {
+
+    }
 
 }

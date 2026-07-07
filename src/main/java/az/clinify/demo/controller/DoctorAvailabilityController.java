@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class DoctorAvailabilityController {
     private final DoctorAvailabilityService availabilityService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<DoctorAvailabilityResponse>createAvailability(
             @Valid @RequestBody CreateDoctorAvailabilityRequest request){
         DoctorAvailabilityResponse response = availabilityService.createAvailability(request);
@@ -38,17 +40,20 @@ public class DoctorAvailabilityController {
         return ResponseEntity.ok(availabilityService.getDoctorAvailabilitiesByDoctorId(doctorId));
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Void>deleteAvailability(@PathVariable Long id){
         availabilityService.deleteDoctorAvailability(id);
         return ResponseEntity.noContent().build();
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<DoctorAvailabilityResponse>updateAvailability(
             @PathVariable Long id,
             @Valid @RequestBody UpdateDoctorAvailabilityRequest request){
         return ResponseEntity.ok(availabilityService.updateDoctorAvailability(id,request));
     }
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<DoctorAvailabilityResponse>updateAvailabilityStatus(
             @PathVariable Long id,
             @RequestParam Boolean active){
