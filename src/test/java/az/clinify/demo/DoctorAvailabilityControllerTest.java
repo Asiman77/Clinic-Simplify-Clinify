@@ -196,6 +196,45 @@ class DoctorAvailabilityControllerTest {
         verify(availabilityService, times(1)).getDoctorAvailabilityById(1L);
     }
 
+    @Test
+    void getAllAvailabilities_returnsOkWithList() throws Exception {
+        List<DoctorAvailabilityResponse> list = List.of(buildResponse(1L), buildResponse(2L));
+        when(availabilityService.getAllDoctorAvailabilities()).thenReturn(list);
+
+        mockMvc.perform(get("/api/availabilities"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[1].id").value(2));
+
+        verify(availabilityService, times(1)).getAllDoctorAvailabilities();
+    }
+
+    @Test
+    void getAvailabilitiesByDoctorId_returnsOkWithList() throws Exception {
+        List<DoctorAvailabilityResponse> list = List.of(buildResponse(1L));
+        when(availabilityService.getDoctorAvailabilitiesByDoctorId(1L)).thenReturn(list);
+
+        mockMvc.perform(get("/api/availabilities/doctor/{doctorId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].doctorId").value(1));
+
+        verify(availabilityService, times(1)).getDoctorAvailabilitiesByDoctorId(1L);
+    }
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void deleteAvailability_existingId_returnsNoContent() throws Exception {
+        doNothing().when(availabilityService).deleteDoctorAvailability(1L);
+
+        mockMvc.perform(delete("/api/availabilities/{id}", 1L)
+                        .with(csrf())
+                        .with(user("username").roles("ADMIN")))
+                .andExpect(status().isNoContent());
+
+        verify(availabilityService, times(1)).deleteDoctorAvailability(1L);
+    }
+
 
 
 
