@@ -5,11 +5,15 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import az.clinify.demo.dto.request.UpdateLabResponseRequest;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.service.LabResponseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -36,6 +40,14 @@ public class LabResponseController {
     public ResponseEntity<List<LabResponseResponseDTO>> getPendingLabResponses() {
         return ResponseEntity.ok(
                 labResponseService.getPendingLabResponses());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<LabResponseResponseDTO> updateLabResponse(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateLabResponseRequest request) {
+        return ResponseEntity.ok(
+                labResponseService.updateLabResponse(id, request));
     }
 
 }
