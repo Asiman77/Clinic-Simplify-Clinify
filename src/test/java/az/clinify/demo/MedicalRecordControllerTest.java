@@ -16,6 +16,21 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import az.clinify.demo.dto.request.MedicalRecordRequestDTO;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -95,6 +110,77 @@ class MedicalRecordControllerTest {
         record.setUpdatedAt(LocalDateTime.now());
 
         return record;
+    }
+
+    @Test
+    void createMedicalRecord_ShouldReturnCreated() throws Exception {
+
+        MedicalRecordRequestDTO request =
+                new MedicalRecordRequestDTO(
+                        10L,
+                        "Flu",
+                        "Fever",
+                        "Medicine",
+                        LabStatuses.PENDING,
+                        "Blood Test"
+                );
+
+        when(medicalRecordService.CreateMedicalRecord(any()))
+                .thenReturn(sampleResponse());
+
+        mockMvc.perform(
+                        post("/api/records")
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "doctor",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_DOCTOR")
+                                                )
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.diagnosis").value("Flu"));
+
+        verify(medicalRecordService)
+                .CreateMedicalRecord(any());
+    }
+
+    @Test
+    void createMedicalRecord_ShouldReturnForbidden_WhenPatient() throws Exception {
+
+        MedicalRecordRequestDTO request =
+                new MedicalRecordRequestDTO(
+                        10L,
+                        "Flu",
+                        "Fever",
+                        "Medicine",
+                        LabStatuses.PENDING,
+                        "Blood Test"
+                );
+
+        mockMvc.perform(
+                        post("/api/records")
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "patient",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_PATIENT")
+                                                )
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden());
+
+        verify(medicalRecordService, never())
+                .CreateMedicalRecord(any());
     }
 
 }
