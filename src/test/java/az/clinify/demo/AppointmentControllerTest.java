@@ -193,5 +193,70 @@ class AppointmentControllerTest {
                 .getByDoctor(any());
     }
 
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void createAppointment_ShouldReturnCreated() throws Exception {
+
+
+        AppointmentRequestDTO request =
+                new AppointmentRequestDTO(
+                        20L,
+                        10L,
+                        AppointmentType.ONLINE,
+                        LocalDateTime.now().plusDays(1),
+                        "Routine check-up"
+                );
+
+
+        when(appointmentBookingService.createAppointment(any()))
+                .thenReturn(sampleResponse());
+
+
+        mockMvc.perform(post("/api/appointments")
+                        .with(csrf())
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "patient",
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
+                        )))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
+
+
+        verify(appointmentBookingService)
+                .createAppointment(any());
+    }
+
+    @Test
+    @WithMockUser(roles = "DOCTOR")
+    void createAppointment_ShouldReturnForbidden_WhenDoctor() throws Exception {
+
+
+        AppointmentRequestDTO request =
+                new AppointmentRequestDTO(
+                        20L,
+                        10L,
+                        AppointmentType.ONLINE,
+                        LocalDateTime.now().plusDays(1),
+                        "Routine check-up"
+                );
+
+
+
+        mockMvc.perform(post("/api/appointments")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+
+
+        verify(appointmentBookingService, never())
+                .createAppointment(any());
+    }
 
 }
+
+
