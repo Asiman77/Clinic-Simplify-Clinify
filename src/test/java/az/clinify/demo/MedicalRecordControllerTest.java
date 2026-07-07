@@ -36,6 +36,7 @@ import az.clinify.demo.dto.request.MedicalRecordStatusRequest;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -281,4 +282,58 @@ class MedicalRecordControllerTest {
                 .setStatus(any(), any());
     }
 
+    @Test
+    void getPatientRecords_ShouldReturnOk_WhenDoctor() throws Exception {
+
+        MedicalRecordSummaryDto summary =
+                new MedicalRecordSummaryDto(
+                        1L,
+                        "Flu",
+                        LabStatuses.PENDING,
+                        LocalDateTime.now()
+                );
+
+        when(medicalRecordService.getPatientMedicalRecords(10L))
+                .thenReturn(List.of(summary));
+
+        mockMvc.perform(
+                        get("/api/records/patient/{patientId}", 10L)
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "doctor",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_DOCTOR")
+                                                )
+                                        )
+                                ))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].diagnosis").value("Flu"));
+
+        verify(medicalRecordService)
+                .getPatientMedicalRecords(10L);
+    }
+
+    @Test
+    void getPatientRecords_ShouldReturnForbidden_WhenPatient() throws Exception {
+
+        mockMvc.perform(
+                        get("/api/records/patient/{patientId}", 10L)
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "patient",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_PATIENT")
+                                                )
+                                        )
+                                ))
+                )
+                .andExpect(status().isForbidden());
+
+        verify(medicalRecordService, never())
+                .getPatientMedicalRecords(any());
+    }
 }
