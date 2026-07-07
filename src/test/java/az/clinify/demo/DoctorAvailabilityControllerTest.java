@@ -167,4 +167,36 @@ class DoctorAvailabilityControllerTest {
 
         verify(availabilityService, never()).createAvailability(any());
     }
+
+    @Test
+    void createAvailability_unauthenticated_returnsUnauthorized() throws Exception {
+        CreateDoctorAvailabilityRequest request = buildCreateRequest();
+
+        mockMvc.perform(post("/api/availabilities")
+                        .with(csrf())
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "user", null, List.of(new SimpleGrantedAuthority("ROLE_USER")))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(availabilityService, never()).createAvailability(any());
+    }
+
+    @Test
+    void getAvailabilityById_existingId_returnsOk() throws Exception {
+        DoctorAvailabilityResponse response = buildResponse(1L);
+        when(availabilityService.getDoctorAvailabilityById(1L)).thenReturn(response);
+
+        mockMvc.perform(get("/api/availabilities/{id}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.doctorFirstName").value("Elvin"));
+
+        verify(availabilityService, times(1)).getDoctorAvailabilityById(1L);
+    }
+
+
+
+
 }
