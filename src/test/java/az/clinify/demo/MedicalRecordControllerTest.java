@@ -31,6 +31,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -181,6 +182,32 @@ class MedicalRecordControllerTest {
 
         verify(medicalRecordService, never())
                 .CreateMedicalRecord(any());
+    }
+
+    @Test
+    void getMedicalRecord_ShouldReturnOk() throws Exception {
+
+        when(medicalRecordService.returnMedicalRecord(1L))
+                .thenReturn(sampleResponse());
+
+        mockMvc.perform(
+                        get("/api/records/{id}", 1L)
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "doctor",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_DOCTOR")
+                                                )
+                                        )
+                                ))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.diagnosis").value("Flu"));
+
+        verify(medicalRecordService)
+                .returnMedicalRecord(1L);
     }
 
 }
