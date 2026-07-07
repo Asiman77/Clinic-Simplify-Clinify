@@ -48,7 +48,7 @@ public class MockDataService {
         if (!mockData.getFirstName().equals(request.getFirstName())
                 || !mockData.getLastName().equals(request.getLastName())
                 || !mockData.getBirthDate().equals(request.getBirthDate())
-                || mockData.getGender() != request.getGender()) {
+                || !mockData.getGender().equals(request.getGender())) {
 
             throw new BaseBadRequestException("Entered information does not match official records.");
         }

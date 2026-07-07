@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -33,10 +34,11 @@ public class AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final MockDataService mockDataService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public FinCheckResponse checkFin(FinCheckRequest request) {
         String fin = request.getFin();
-        boolean present = userRepository.findByFin(fin).isPresent();
+        boolean present = userRepository.findByFin(fin).get().isHasAccount();
 
         if (present) {
             return new FinCheckResponse(fin, "LOGIN_REQUIRED", "Please insert password");
@@ -53,8 +55,8 @@ public class AuthService {
         User user = userRepository.findByFin(request.getFin())
                 .orElseThrow(() -> new UserNotFoundException("This fin does not exist"));
 
-        if (!user.getPassword().equals(request.getPassword())) {
-            throw new BadCredentialsException("Password is wrong.");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new BaseBadRequestException("Password is wrong.");
         }
         Set<String> rolesList = user.getRoles().stream()
                 .map(Role::getName)
@@ -121,7 +123,7 @@ public class AuthService {
         newUser.setBirthDate(mockData.getBirthDate());
 
         // Front-dan gələn yeni əsas şifrəni təyin edirik
-        newUser.setPassword(request.getPassword());
+        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         newUser.setHasAccount(true);
 
         userRepository.save(newUser);

@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register/setup-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register-new-user").authenticated()
 
                         .requestMatchers(HttpMethod.GET, "/api/departments/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/departments").hasRole("ADMIN")
