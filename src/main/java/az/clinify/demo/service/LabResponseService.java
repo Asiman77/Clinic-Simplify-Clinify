@@ -12,6 +12,7 @@ import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.InvalidStatusException;
+import az.clinify.demo.exceptions.LabResponseNotFoundException;
 import az.clinify.demo.mapper.LabResponseMapper;
 import az.clinify.demo.repository.LabResponseRepository;
 import lombok.RequiredArgsConstructor;
@@ -77,8 +78,7 @@ public class LabResponseService {
 
     private LabResponse getLabResponseEntityById(Long id) {
         return labResponseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
-                        "Lab response not found with id: " + id));
+                .orElseThrow(() -> new LabResponseNotFoundException("Lab response not found with id: " + id));
     }
 
     private void validateCompletedStatus(LabResponse labResponse, LabStatuses requestedStatus) {
