@@ -16,17 +16,20 @@ public class LabResponseMapper {
         LabResponseResponseDTO response = new LabResponseResponseDTO();
 
         response.setId(labResponse.getId());
-
         response.setMedicalRecordId(labResponse.getMedicalRecord().getId());
 
-        response.setLabTechnicianId(labResponse.getLabTechnician().getId());
-        response.setLabTechnicianFullName(
-                labResponse.getLabTechnician().getFirstName() + " " +
-                        labResponse.getLabTechnician().getLastName()
-        );
+        if (labResponse.getLabTechnician() != null) {
+            response.setLabTechnicianId(labResponse.getLabTechnician().getId());
+            response.setLabTechnicianFullName(
+                    labResponse.getLabTechnician().getFirstName() + " " +
+                            labResponse.getLabTechnician().getLastName());
+        }
 
+        response.setTestName(labResponse.getTestName());
+        response.setStatus(labResponse.getStatus());
         response.setResultText(labResponse.getResultText());
         response.setNote(labResponse.getNote());
+        response.setFiles(labResponse.getFiles());
 
         response.setCreatedAt(labResponse.getCreatedAt());
         response.setUpdatedAt(labResponse.getUpdatedAt());

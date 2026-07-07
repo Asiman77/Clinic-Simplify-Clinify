@@ -1,6 +1,9 @@
 package az.clinify.demo.dto.request;
 
+import java.util.List;
+
 import az.clinify.demo.enums.LabStatuses;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -29,8 +32,6 @@ public class MedicalRecordRequestDTO {
     @Size(max = 2000, message = "Receipt must not exceed 2000 characters")
     private String receipt;
 
-    private LabStatuses labStatus;
-
-    @Size(max = 1000, message = "Test name must not exceed 1000 characters")
-    private String testName;
+    @Valid
+    private List<CreateLabTestRequest> labTests;
 }

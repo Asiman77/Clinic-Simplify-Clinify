@@ -29,11 +29,6 @@ public class MedicalRecordResponseDTO {
 
     private LocalDateTime recordDate;
 
-    private LabStatuses labStatus;
-    private LocalDateTime statusUpdatedAt;
-
-    private String testName;
-
     private List<LabResponseResponseDTO> labResponses;
 
     private LocalDateTime createdAt;
