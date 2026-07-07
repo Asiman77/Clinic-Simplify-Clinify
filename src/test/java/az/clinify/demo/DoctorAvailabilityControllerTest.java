@@ -155,4 +155,16 @@ class DoctorAvailabilityControllerTest {
         verify(availabilityService, never()).createAvailability(any());
     }
 
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void createAvailability_wrongRole_returnsForbidden() throws Exception {
+        CreateDoctorAvailabilityRequest request = buildCreateRequest();
+
+        mockMvc.perform(post("/api/availabilities")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(availabilityService, never()).createAvailability(any());
+    }
 }
