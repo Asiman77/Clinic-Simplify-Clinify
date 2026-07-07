@@ -235,6 +235,55 @@ class DoctorAvailabilityControllerTest {
         verify(availabilityService, times(1)).deleteDoctorAvailability(1L);
     }
 
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void deleteAvailability_wrongRole_returnsForbidden() throws Exception {
+        mockMvc.perform(delete("/api/availabilities/{id}", 1L))
+                .andExpect(status().isForbidden());
+
+        verify(availabilityService, never()).deleteDoctorAvailability(anyLong());
+    }
+
+    @Test
+    @WithMockUser(roles = "DOCTOR")
+    void updateAvailability_validRequest_returnsOk() throws Exception {
+        UpdateDoctorAvailabilityRequest request = buildUpdateRequest();
+        DoctorAvailabilityResponse response = buildResponse(1L);
+        response.setDayOfWeek(DayOfWeek.TUESDAY);
+        response.setActive(false);
+
+        when(availabilityService.updateDoctorAvailability(eq(1L), any(UpdateDoctorAvailabilityRequest.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(put("/api/availabilities/{id}", 1L)
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "doctor", null, List.of(new SimpleGrantedAuthority("ROLE_DOCTOR")))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dayOfWeek").value("TUESDAY"))
+                .andExpect(jsonPath("$.active").value(false));
+
+        verify(availabilityService, times(1))
+                .updateDoctorAvailability(eq(1L), any(UpdateDoctorAvailabilityRequest.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateAvailability_missingRequiredFields_returnsBadRequest() throws Exception {
+        UpdateDoctorAvailabilityRequest request = new UpdateDoctorAvailabilityRequest();
+
+        mockMvc.perform(put("/api/availabilities/{id}", 1L)
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "admin", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verify(availabilityService, never()).updateDoctorAvailability(anyLong(), any());
+    }
+
 
 
 
