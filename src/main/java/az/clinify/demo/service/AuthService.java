@@ -5,15 +5,16 @@ import org.springframework.stereotype.Service;
 import az.clinify.demo.dto.request.AuthRequestDTO;
 import az.clinify.demo.dto.request.FinCheckRequest;
 import az.clinify.demo.dto.request.PasswordSetupRequest;
+import az.clinify.demo.dto.request.ReceptionRegisterRequest;
 import az.clinify.demo.dto.response.AuthResponse;
 import az.clinify.demo.dto.response.FinCheckResponse;
 import az.clinify.demo.dto.response.RegisterVerifyResponse;
 import az.clinify.demo.entity.Role;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.RoleType;
+import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mockServer.MockData;
-import az.clinify.demo.mockServer.MockDataRepository;
 import az.clinify.demo.mockServer.MockDataService;
 import az.clinify.demo.repository.UserRepository;
 import az.clinify.demo.security.JwtTokenProvider;
@@ -24,14 +25,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final MockDataRepository mockDataRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final MockDataService mockDataService;
 
@@ -84,6 +83,28 @@ public class AuthService {
 
     }
 
+    public String registerFromReception(ReceptionRegisterRequest request) {
+
+        if (userRepository.findByFin(request.getFin()).isPresent()) {
+            throw new BaseBadRequestException("User is already registered.");
+        }
+
+        boolean isValid = mockDataService.verifyReceptionData(request);
+
+        if (isValid) {
+            User newUser = new User();
+
+            newUser.setFin(request.getFin());
+            newUser.setFirstName(request.getFirstName());
+            newUser.setLastName(request.getLastName());
+            newUser.setBirthDate(request.getBirthDate());
+            newUser.setGender(request.getGender());
+
+            userRepository.save(newUser);
+        }
+
+        return "Account created successfully.";
+    }
 
     public String setupPassword(PasswordSetupRequest request) {
         // İstifadəçi artıq qeydiyyatdan keçibsə, təkrar yaratmayaq
@@ -91,9 +112,7 @@ public class AuthService {
             throw new IllegalStateException("User is already registered with this FIN.");
         }
 
-        MockData mockData = mockDataRepository.findByFin(request.getFin())
-                .orElseThrow(() -> new EntityNotFoundException("Mock data not found for this FIN."));
-
+        MockData mockData = mockDataService.getNewUserData(request.getFin());
         User newUser = new User();
         newUser.setFin(mockData.getFin());
         newUser.setFirstName(mockData.getFirstName());
@@ -103,6 +122,7 @@ public class AuthService {
 
         // Front-dan gələn yeni əsas şifrəni təyin edirik
         newUser.setPassword(request.getPassword());
+        newUser.setHasAccount(true);
 
         userRepository.save(newUser);
 
