@@ -138,5 +138,21 @@ class DoctorAvailabilityControllerTest {
 
         verify(availabilityService, never()).createAvailability(any());
     }
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createAvailability_invalidSlotDuration_returnsBadRequest() throws Exception {
+        CreateDoctorAvailabilityRequest request = buildCreateRequest();
+        request.setSlotDurationMinutes(0);
+
+        mockMvc.perform(post("/api/availabilities")
+                        .with(csrf())
+                        .with(authentication(new UsernamePasswordAuthenticationToken(
+                                "admin", null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verify(availabilityService, never()).createAvailability(any());
+    }
 
 }
