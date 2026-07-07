@@ -38,6 +38,10 @@ import static org.mockito.Mockito.never;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import az.clinify.demo.dto.request.UpdateDoctorProfileRequest;
+
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 @WebMvcTest(DoctorProfileController.class)
 @Import(SecurityConfig.class)
@@ -218,5 +222,81 @@ class DoctorProfileControllerTest {
 
         verify(doctorProfileService, never())
                 .createDoctor(any());
+    }
+
+    @Test
+    void updateDoctor_ShouldReturnOk_WhenUserIsAdmin() throws Exception {
+
+        UpdateDoctorProfileRequest request = new UpdateDoctorProfileRequest(
+                2L,
+                "Neurologist",
+                "Updated bio",
+                7,
+                true
+        );
+
+        DoctorProfileResponse response = new DoctorProfileResponse(
+                1L,
+                10L,
+                "Aygun",
+                "Aliyeva",
+                "aygun@example.com",
+                2L,
+                "Neurology",
+                "Neurologist",
+                "Updated bio",
+                7,
+                true
+        );
+
+        when(doctorProfileService.updateDoctor(
+                eq(1L),
+                any(UpdateDoctorProfileRequest.class)
+        )).thenReturn(response);
+
+        mockMvc.perform(
+                        put("/api/doctors/{id}", 1L)
+                                .with(csrf())
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "admin",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_ADMIN")
+                                                )
+                                        )
+                                ))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.specialization").value("Neurologist"));
+
+        verify(doctorProfileService)
+                .updateDoctor(eq(1L), any(UpdateDoctorProfileRequest.class));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void updateDoctor_ShouldReturnForbidden_WhenUserIsNotAdmin() throws Exception {
+
+        UpdateDoctorProfileRequest request = new UpdateDoctorProfileRequest(
+                2L,
+                "Neurologist",
+                "Updated bio",
+                7,
+                true
+        );
+
+        mockMvc.perform(
+                        put("/api/doctors/{id}", 1L)
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden());
+
+        verify(doctorProfileService, never())
+                .updateDoctor(any(), any());
     }
 }
