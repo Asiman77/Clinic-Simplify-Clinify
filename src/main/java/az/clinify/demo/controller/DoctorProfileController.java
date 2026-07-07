@@ -61,7 +61,7 @@ public class DoctorProfileController {
         return doctorProfileService.createDoctor(request);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public DoctorProfileResponse updateDoctor(
             @PathVariable Long id,
@@ -69,13 +69,13 @@ public class DoctorProfileController {
         return doctorProfileService.updateDoctor(id, request);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/activate")
     public DoctorProfileResponse activateDoctor(@PathVariable Long id) {
         return doctorProfileService.activateDoctor(id);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/deactivate")
     public DoctorProfileResponse deactivateDoctor(@PathVariable Long id) {
         return doctorProfileService.deactivateDoctor(id);
