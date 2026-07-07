@@ -15,58 +15,49 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MedicalRecordMapper {
 
-    private final UserRepository userRepository;
-    private final DoctorProfileRepository doctorProfileRepository;
-    private final LabResponseMapper labResponseMapper;
+        private final UserRepository userRepository;
+        private final DoctorProfileRepository doctorProfileRepository;
+        private final LabResponseMapper labResponseMapper;
 
-    public MedicalRecordResponseDTO toResponse(MedicalRecord medicalRecord) {
+        public MedicalRecordResponseDTO toResponse(MedicalRecord medicalRecord) {
 
-        if (medicalRecord == null) {
-            return null;
+                if (medicalRecord == null) {
+                        return null;
+                }
+
+                User patient = userRepository.findById(medicalRecord.getPatient().getId())
+                                .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+                DoctorProfile doctor = doctorProfileRepository.findById(medicalRecord.getDoctor().getId())
+                                .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+                MedicalRecordResponseDTO response = new MedicalRecordResponseDTO();
+
+                response.setId(medicalRecord.getId());
+
+                response.setPatientId(patient.getId());
+                response.setPatientFullName(
+                                patient.getFirstName() + " " + patient.getLastName());
+
+                response.setDoctorId(doctor.getId());
+                response.setDoctorFullName(
+                                doctor.getUser().getFirstName() + " " +
+                                                doctor.getUser().getLastName());
+
+                response.setDiagnosis(medicalRecord.getDiagnosis());
+                response.setSymptoms(medicalRecord.getSymptoms());
+                response.setReceipt(medicalRecord.getReceipt());
+                response.setRecordDate(medicalRecord.getRecordDate());
+
+                response.setLabResponses(
+                                medicalRecord.getLabResponses()
+                                                .stream()
+                                                .map(labResponseMapper::toResponse)
+                                                .collect(Collectors.toList()));
+
+                response.setCreatedAt(medicalRecord.getCreatedAt());
+                response.setUpdatedAt(medicalRecord.getUpdatedAt());
+
+                return response;
         }
-
-        User patient = userRepository.findById(medicalRecord.getPatient().getId())
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
-
-        DoctorProfile doctor = doctorProfileRepository.findById(medicalRecord.getDoctor().getId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
-        MedicalRecordResponseDTO response = new MedicalRecordResponseDTO();
-
-        response.setId(medicalRecord.getId());
-
-        response.setPatientId(patient.getId());
-        response.setPatientFullName(
-                patient.getFirstName() + " " + patient.getLastName()
-        );
-
-        response.setDoctorId(doctor.getId());
-        response.setDoctorFullName(
-                doctor.getUser().getFirstName() + " " +
-                        doctor.getUser().getLastName()
-        );
-
-        response.setDiagnosis(medicalRecord.getDiagnosis());
-        response.setSymptoms(medicalRecord.getSymptoms());
-        response.setReceipt(medicalRecord.getReceipt());
-
-        response.setRecordDate(medicalRecord.getRecordDate());
-
-        response.setLabStatus(medicalRecord.getLabStatus());
-        response.setStatusUpdatedAt(medicalRecord.getStatusUpdatedAt());
-
-        response.setTestName(medicalRecord.getTestName());
-
-        response.setLabResponses(
-                medicalRecord.getLabResponses()
-                        .stream()
-                        .map(labResponseMapper::toResponse)
-                        .collect(Collectors.toList())
-        );
-
-        response.setCreatedAt(medicalRecord.getCreatedAt());
-        response.setUpdatedAt(medicalRecord.getUpdatedAt());
-
-        return response;
-    }
 }

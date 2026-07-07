@@ -6,6 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
+import az.clinify.demo.enums.LabStatuses;
+import az.clinify.demo.valueobject.LabResponseFileMetadata;
 
 @Getter
 @Setter
@@ -19,9 +23,14 @@ public class LabResponseResponseDTO {
     private Long labTechnicianId;
     private String labTechnicianFullName;
 
+    private String testName;
+    private LabStatuses status;
+
     private String resultText;
 
     private String note;
+
+    private List<LabResponseFileMetadata> files;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

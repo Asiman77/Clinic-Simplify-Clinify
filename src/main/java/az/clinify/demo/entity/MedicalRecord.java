@@ -47,16 +47,6 @@ public class MedicalRecord extends BaseEntity {
     @JoinColumn(name = "patient_id", nullable = false)
     private User patient;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "lab_status", nullable = false)
-    private LabStatuses labStatus = LabStatuses.NOT_REQUIRED;
-
-    @Column(name = "status_updated_at", nullable = false)
-    private LocalDateTime statusUpdatedAt;
-
-    @Column(name = "test_name", columnDefinition = "TEXT")
-    private String testName;
-
     @OneToMany(mappedBy = "medicalRecord", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LabResponse> labResponses = new ArrayList<>();
 }
