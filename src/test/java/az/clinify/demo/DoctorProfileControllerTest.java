@@ -39,9 +39,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import az.clinify.demo.dto.request.UpdateDoctorProfileRequest;
-
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
 @WebMvcTest(DoctorProfileController.class)
 @Import(SecurityConfig.class)
@@ -298,5 +297,109 @@ class DoctorProfileControllerTest {
 
         verify(doctorProfileService, never())
                 .updateDoctor(any(), any());
+    }
+
+    @Test
+    void activateDoctor_ShouldReturnOk_WhenUserIsAdmin() throws Exception {
+
+        DoctorProfileResponse response = new DoctorProfileResponse(
+                1L,
+                10L,
+                "Aygun",
+                "Aliyeva",
+                "aygun@example.com",
+                2L,
+                "Cardiology",
+                "Cardiologist",
+                "Experienced cardiologist",
+                5,
+                true
+        );
+
+        when(doctorProfileService.activateDoctor(1L))
+                .thenReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/doctors/{id}/activate", 1L)
+                                .with(csrf())
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "admin",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_ADMIN")
+                                                )
+                                        )
+                                ))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(doctorProfileService).activateDoctor(1L);
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void activateDoctor_ShouldReturnForbidden_WhenUserIsNotAdmin() throws Exception {
+
+        mockMvc.perform(
+                        patch("/api/doctors/{id}/activate", 1L)
+                                .with(csrf())
+                )
+                .andExpect(status().isForbidden());
+
+        verify(doctorProfileService, never()).activateDoctor(any());
+    }
+
+    @Test
+    void deactivateDoctor_ShouldReturnOk_WhenUserIsAdmin() throws Exception {
+
+        DoctorProfileResponse response = new DoctorProfileResponse(
+                1L,
+                10L,
+                "Aygun",
+                "Aliyeva",
+                "aygun@example.com",
+                2L,
+                "Cardiology",
+                "Cardiologist",
+                "Experienced cardiologist",
+                5,
+                false
+        );
+
+        when(doctorProfileService.deactivateDoctor(1L))
+                .thenReturn(response);
+
+        mockMvc.perform(
+                        patch("/api/doctors/{id}/deactivate", 1L)
+                                .with(csrf())
+                                .with(authentication(
+                                        new UsernamePasswordAuthenticationToken(
+                                                "admin",
+                                                null,
+                                                List.of(
+                                                        new SimpleGrantedAuthority("ROLE_ADMIN")
+                                                )
+                                        )
+                                ))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        verify(doctorProfileService).deactivateDoctor(1L);
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void deactivateDoctor_ShouldReturnForbidden_WhenUserIsNotAdmin() throws Exception {
+
+        mockMvc.perform(
+                        patch("/api/doctors/{id}/deactivate", 1L)
+                                .with(csrf())
+                )
+                .andExpect(status().isForbidden());
+
+        verify(doctorProfileService, never()).deactivateDoctor(any());
     }
 }
