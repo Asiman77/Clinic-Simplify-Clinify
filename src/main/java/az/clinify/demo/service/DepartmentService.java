@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Service
 
@@ -19,6 +21,23 @@ public class DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final DepartmentMapper departmentMapper;
+
+    @Transactional(readOnly = true)
+    public List<DepartmentResponse> getAllDepartments() {
+        return departmentRepository.findAll()
+                .stream()
+                .map(departmentMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public DepartmentResponse getDepartmentById(Long id) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new DepartmentNotFoundException(id));
+
+        return departmentMapper.toResponse(department);
+    }
+
 
     @Transactional
     public DepartmentResponse createDepartment(CreateDepartmentRequest request) {

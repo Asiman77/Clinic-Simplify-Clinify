@@ -4,11 +4,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import az.clinify.demo.dto.request.AuthRequestDTO;
 import az.clinify.demo.dto.request.FinCheckRequest;
 import az.clinify.demo.dto.request.PasswordSetupRequest;
+import az.clinify.demo.dto.request.ReceptionRegisterRequest;
 import az.clinify.demo.dto.response.AuthResponse;
 import az.clinify.demo.dto.response.FinCheckResponse;
 import az.clinify.demo.dto.response.RegisterVerifyResponse;
@@ -40,4 +42,13 @@ public class AuthController {
     public ResponseEntity<String> setupPassword(@Valid @RequestBody PasswordSetupRequest request) {
         return ResponseEntity.ok(authService.setupPassword(request));
     }
+
+
+    @PreAuthorize("hasRole('RECEPTION')")   
+    @PostMapping("/register-new-user")
+public ResponseEntity<String> registerFromReception(
+        @RequestBody ReceptionRegisterRequest request) {
+
+    return ResponseEntity.ok(authService.registerFromReception(request));
+}
 }

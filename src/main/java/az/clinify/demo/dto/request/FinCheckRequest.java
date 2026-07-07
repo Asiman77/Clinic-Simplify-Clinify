@@ -14,4 +14,8 @@ public class FinCheckRequest {
     @NotBlank(message = "FIN boş ola bilməz")
     @Size(min = 7, max = 7, message = "FIN kodu dəqiq 7 simvoldan ibarət olmalıdır")
     private String fin;
+
+    public FinCheckRequest() {
+
+    }
 }

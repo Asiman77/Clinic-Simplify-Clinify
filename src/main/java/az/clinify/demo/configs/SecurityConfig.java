@@ -1,8 +1,10 @@
 package az.clinify.demo.configs;
 
-
+import az.clinify.demo.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -51,7 +53,44 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers("/api/**").permitAll()
+                        // Auth endpoints - public
+                        .requestMatchers(HttpMethod.POST, "/api/auth/check-fin").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register/verify").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register/setup-password").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/api/departments/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/departments").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/departments/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/departments/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/doctors").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/doctors/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/doctors").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/doctors/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/activate").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/deactivate").hasRole("ADMIN")
+
+
+                        .requestMatchers(HttpMethod.GET, "/api/availabilities").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/availabilities/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/availabilities").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/availabilities/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/availabilities/*/status").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/availabilities/**").hasAnyRole("ADMIN", "DOCTOR")
+
+                        .requestMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments").hasAnyRole("ADMIN", "RECEPTION")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/*").hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "RECEPTION")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/patient/**").hasAnyRole("ADMIN", "PATIENT", "RECEPTION")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
+                        .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/status").hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
+
+                        .requestMatchers(HttpMethod.GET, "/api/records/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "LAB_TECHNICIAN")
+                        .requestMatchers(HttpMethod.POST, "/api/records").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/records/**").hasAnyRole("ADMIN", "DOCTOR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/records/*/status").hasAnyRole("ADMIN", "DOCTOR", "LAB_TECHNICIAN")
+
                         .anyRequest().permitAll());
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
