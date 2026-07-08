@@ -52,10 +52,14 @@ public class DoctorProfileController {
     }
 
     @GetMapping("/{id}/available-slots")
-    public ResponseEntity<List<AvailableSlotResponse>> getAvailableSlots(@PathVariable Long id,
+    public ResponseEntity<Page<AvailableSlotResponse>> getAvailableSlots(
+            @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam AppointmentType type) {
-        return ResponseEntity.ok(availableSlotService.getAvailableSlots(id, date, type));
+            @RequestParam AppointmentType type,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        return ResponseEntity.ok(
+                availableSlotService.getAvailableSlots(id, date, type, pageable));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

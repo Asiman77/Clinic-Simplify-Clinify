@@ -134,9 +134,10 @@ void getAllDoctors_ShouldReturnOk() throws Exception {
         verify(doctorProfileService).getDoctorById(1L);
     }
 
-    @Test
-    @WithMockUser
-    void getAvailableSlots_ShouldReturnOk() throws Exception {
+        @Test
+        @WithMockUser
+        void getAvailableSlots_ShouldReturnOk() throws Exception {
+
         LocalDate date = LocalDate.of(2026, 7, 10);
 
         AvailableSlotResponse slot = new AvailableSlotResponse(
@@ -145,21 +146,35 @@ void getAllDoctors_ShouldReturnOk() throws Exception {
                 true
         );
 
+        Page<AvailableSlotResponse> page = new PageImpl<>(
+                List.of(slot),
+                PageRequest.of(0, 10),
+                1
+        );
+
         when(availableSlotService.getAvailableSlots(
                 eq(1L),
                 eq(date),
-                eq(AppointmentType.WALK_IN)))
-                .thenReturn(List.of(slot));
+                eq(AppointmentType.WALK_IN),
+                any(Pageable.class)))
+                .thenReturn(page);
 
         mockMvc.perform(get("/api/doctors/{id}/available-slots", 1L)
                         .param("date", "2026-07-10")
-                        .param("type", "WALK_IN"))
+                        .param("type", "WALK_IN")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].available").value(true));
+                .andExpect(jsonPath("$.content[0].available").value(true))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
         verify(availableSlotService)
-                .getAvailableSlots(1L, date, AppointmentType.WALK_IN);
-    }
+                .getAvailableSlots(
+                        eq(1L),
+                        eq(date),
+                        eq(AppointmentType.WALK_IN),
+                        any(Pageable.class));
+        }
 
     @Test
     @WithMockUser(roles = "ADMIN")
