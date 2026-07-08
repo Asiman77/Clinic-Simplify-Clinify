@@ -10,7 +10,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
-import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,22 +41,23 @@ public class MedicalrecordController {
     }
 
     @GetMapping("/patient/{patientId}")
-    @PreAuthorize("hasRole('DOCTOR')") 
-    public ResponseEntity<List<MedicalRecordSummaryDto>> getPatientRecords(@PathVariable Long patientId) {
-        List<MedicalRecordSummaryDto> records = service.getPatientMedicalRecords(patientId);
-        return ResponseEntity.ok(records);
+    @PreAuthorize("hasRole('DOCTOR')")
+    public ResponseEntity<Page<MedicalRecordSummaryDto>> getPatientRecords(
+            @PathVariable Long patientId,
+            @PageableDefault(page = 0, size = 10, sort = "recordDate", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(service.getPatientMedicalRecords(patientId, pageable));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('DOCTOR')") 
+    @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<MedicalRecord> updateRecord(
             @PathVariable Long id,
             @Valid @RequestBody UpdateMedicalRecordRequest dto,
             Principal principal) {
-        
 
         String currentDoctorUsername = principal.getName();
-        
+
         MedicalRecord updatedRecord = service.updateMedicalRecord(id, dto, currentDoctorUsername);
         return ResponseEntity.ok(updatedRecord);
     }
