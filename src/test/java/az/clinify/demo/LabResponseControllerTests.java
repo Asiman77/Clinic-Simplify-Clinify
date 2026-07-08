@@ -73,6 +73,73 @@ class LabResponseControllerTest {
 
         verify(labResponseService).getLabResponsesByMedicalRecordId(100L);
     }
+    @Test
+    @WithMockUser
+    void getPendingLabResponses_ShouldReturnOk() throws Exception {
+        LabResponseResponseDTO response = new LabResponseResponseDTO();
+        when(labResponseService.getPendingLabResponses()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/lab-responses/pending"))
+                .andExpect(status().isOk());
+
+        verify(labResponseService).getPendingLabResponses();
+    }
+
+    @Test
+    @WithMockUser
+    void updateLabResponse_ShouldReturnOk() throws Exception {
+        UpdateLabResponseRequest request = new UpdateLabResponseRequest(); // request daxilində @Valid üçün lazımi sahələri doldur
+        LabResponseResponseDTO response = new LabResponseResponseDTO();
+
+        when(labResponseService.updateLabResponse(eq(1L), any(UpdateLabResponseRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/lab-responses/{id}", 1L)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(labResponseService).updateLabResponse(eq(1L), any(UpdateLabResponseRequest.class));
+    }
+
+    @Test
+    @WithMockUser
+    void updateLabResponseStatus_ShouldReturnOk() throws Exception {
+        LabResponseStatusRequest request = new LabResponseStatusRequest();
+        request.setStatus(az.clinify.demo.enums.LabStatuses.COMPLETED); // Səndə hansı enum-lar varsa birini yaz (örn: PENDING, APPROVED və s.)
+
+        LabResponseResponseDTO response = new LabResponseResponseDTO();
+
+        when(labResponseService.updateLabResponseStatus(eq(1L), any(LabResponseStatusRequest.class))).thenReturn(response);
+
+        mockMvc.perform(patch("/api/lab-responses/{id}/status", 1L)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(labResponseService).updateLabResponseStatus(eq(1L), any(LabResponseStatusRequest.class));
+    }
+    @Test
+    @WithMockUser
+    void uploadLabResponseFile_ShouldReturnOk() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.pdf",
+                MediaType.APPLICATION_PDF_VALUE,
+                "test data".getBytes()
+        );
+        LabResponseResponseDTO response = new LabResponseResponseDTO();
+
+        when(labResponseService.uploadLabResponseFile(eq(1L), any(MultipartFile.class))).thenReturn(response);
+
+        mockMvc.perform(multipart("/api/lab-responses/{id}/files", 1L)
+                        .file(file)
+                        .with(csrf()))
+                .andExpect(status().isOk());
+
+        verify(labResponseService).uploadLabResponseFile(eq(1L), any(MultipartFile.class));
+    }
 
 
 }
