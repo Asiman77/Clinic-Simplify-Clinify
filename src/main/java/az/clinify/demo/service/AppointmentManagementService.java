@@ -7,6 +7,9 @@ import az.clinify.demo.exceptions.AppointmentNotFoundException;
 import az.clinify.demo.mapper.AppointmentMapper;
 import az.clinify.demo.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,19 +38,18 @@ public class AppointmentManagementService {
         return appointmentMapper.toResponse(appointment);
     }
 
-    @Transactional
-    public List<AppointmentResponseDTO> getByPatient(Long patientId) {
-        return appointmentRepository.findByPatientId(patientId).stream()
-                .map(appointmentMapper::toResponse)
-                .toList();
-    }
+@Transactional(readOnly = true)
+public Page<AppointmentResponseDTO> getByPatient(Long patientId, Pageable pageable) {
+    return appointmentRepository.findByPatientId(patientId, pageable)
+            .map(appointmentMapper::toResponse);
+}
 
-    @Transactional
-    public List<AppointmentResponseDTO> getByDoctor(Long doctorId) {
-        return appointmentRepository.findByDoctorId(doctorId).stream()
-                .map(appointmentMapper::toResponse)
-                .toList();
-    }
+@Transactional(readOnly = true)
+public Page<AppointmentResponseDTO> getByDoctor(Long doctorId, Pageable pageable) {
+    return appointmentRepository.findByDoctorId(doctorId, pageable)
+            .map(appointmentMapper::toResponse);
+}
+    
 
     @Transactional
     public AppointmentResponseDTO updateStatus(Long id, AppointmentStatusRequest request) {
