@@ -9,6 +9,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -64,34 +68,44 @@ class DoctorProfileControllerTest {
     private UserDetailsService userDetailsService;
 
     @Test
-    @WithMockUser
-    void getAllDoctors_ShouldReturnOk() throws Exception {
-        DoctorProfileResponse response = new DoctorProfileResponse(
-                1L,
-                10L,
-                "Aygun",
-                "Aliyeva",
-                "aygun@example.com",
-                2L,
-                "Cardiology",
-                "Cardiologist",
-                "Experienced cardiologist",
-                5,
-                true
-        );
+@WithMockUser
+void getAllDoctors_ShouldReturnOk() throws Exception {
 
-        when(doctorProfileService.getAllDoctors())
-                .thenReturn(List.of(response));
+    DoctorProfileResponse response = new DoctorProfileResponse(
+            1L,
+            10L,
+            "Aygun",
+            "Aliyeva",
+            "aygun@example.com",
+            2L,
+            "Cardiology",
+            "Cardiologist",
+            "Experienced cardiologist",
+            5,
+            true
+    );
 
-        mockMvc.perform(get("/api/doctors"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].doctorFirstName").value("Aygun"))
-                .andExpect(jsonPath("$[0].doctorLastName").value("Aliyeva"));
+    Page<DoctorProfileResponse> page = new PageImpl<>(
+            List.of(response),
+            PageRequest.of(0, 10),
+            1
+    );
 
-        verify(doctorProfileService).getAllDoctors();
-    }
+    when(doctorProfileService.getAllDoctors(any(Pageable.class)))
+            .thenReturn(page);
 
+    mockMvc.perform(get("/api/doctors")
+                    .param("page", "0")
+                    .param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].id").value(1L))
+            .andExpect(jsonPath("$.content[0].doctorFirstName").value("Aygun"))
+            .andExpect(jsonPath("$.content[0].doctorLastName").value("Aliyeva"))
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.totalPages").value(1));
+
+    verify(doctorProfileService).getAllDoctors(any(Pageable.class));
+}
     @Test
     @WithMockUser
     void getDoctorById_ShouldReturnOk() throws Exception {
