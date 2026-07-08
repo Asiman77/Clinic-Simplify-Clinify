@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "appointments")
+@Table(name = "departments")
 public class Department extends BaseEntity{
 
     @Column(nullable = false, unique = true, length = 150)
