@@ -3,6 +3,8 @@ package az.clinify.demo.service;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,11 +39,9 @@ public class DoctorProfileService {
     private final DoctorProfileMapper doctorProfileMapper;
 
     @Transactional(readOnly = true)
-    public List<DoctorProfileResponse> getAllDoctors() {
-        return doctorProfileRepository.findByActiveTrue()
-                .stream()
-                .map(doctorProfileMapper::toResponse)
-                .toList();
+    public Page<DoctorProfileResponse> getAllDoctors(Pageable pageable) {
+        return doctorProfileRepository.findByActiveTrue(pageable)
+                .map(doctorProfileMapper::toResponse);
     }
 
     @Transactional(readOnly = true)

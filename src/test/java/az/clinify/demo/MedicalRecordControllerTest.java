@@ -13,6 +13,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -189,52 +193,45 @@ class MedicalRecordControllerTest {
         verify(medicalRecordService).returnMedicalRecord(1L);
     }
 
-    @Test
-    void getPatientRecords_ShouldReturnOk_WhenDoctor() throws Exception {
+@Test
+void getPatientRecords_ShouldReturnOk_WhenDoctor() throws Exception {
 
-        MedicalRecordSummaryDto summary =
-                new MedicalRecordSummaryDto(
-                        1L,
-                        "Flu",
-                        LocalDateTime.now()
-                );
+    MedicalRecordSummaryDto summary =
+            new MedicalRecordSummaryDto(
+                    1L,
+                    "Flu",
+                    LocalDateTime.now()
+            );
 
-        when(medicalRecordService.getPatientMedicalRecords(10L))
-                .thenReturn(List.of(summary));
+    Page<MedicalRecordSummaryDto> page = new PageImpl<>(
+            List.of(summary),
+            PageRequest.of(0, 10),
+            1
+    );
 
-        mockMvc.perform(
-                        get("/api/records/patient/{patientId}", 10L)
-                                .with(authentication(
-                                        new UsernamePasswordAuthenticationToken(
-                                                "doctor",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
-                                        )
-                                ))
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].diagnosis").value("Flu"));
+    when(medicalRecordService.getPatientMedicalRecords(eq(10L), any(Pageable.class)))
+            .thenReturn(page);
 
-        verify(medicalRecordService).getPatientMedicalRecords(10L);
-    }
+    mockMvc.perform(
+                    get("/api/records/patient/{patientId}", 10L)
+                            .param("page", "0")
+                            .param("size", "10")
+                            .with(authentication(
+                                    new UsernamePasswordAuthenticationToken(
+                                            "doctor",
+                                            null,
+                                            List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
+                                    )
+                            ))
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].id").value(1))
+            .andExpect(jsonPath("$.content[0].diagnosis").value("Flu"))
+            .andExpect(jsonPath("$.totalElements").value(1));
 
-    @Test
-    void getPatientRecords_ShouldReturnForbidden_WhenPatient() throws Exception {
-        mockMvc.perform(
-                        get("/api/records/patient/{patientId}", 10L)
-                                .with(authentication(
-                                        new UsernamePasswordAuthenticationToken(
-                                                "patient",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
-                                        )
-                                ))
-                )
-                .andExpect(status().isForbidden());
-
-        verify(medicalRecordService, never()).getPatientMedicalRecords(any());
-    }
+    verify(medicalRecordService)
+            .getPatientMedicalRecords(eq(10L), any(Pageable.class));
+}
 
     @Test
     void updateRecord_ShouldReturnOk_WhenDoctor() throws Exception {

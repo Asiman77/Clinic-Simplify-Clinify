@@ -8,6 +8,10 @@ import az.clinify.demo.service.AppointmentManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,8 +50,12 @@ public class AppointmentController {
      * @return list of appointments for the patient
      */
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<AppointmentResponseDTO>> getByPatient(@PathVariable Long patientId) {
-        return ResponseEntity.ok(appointmentManagementService.getByPatient(patientId));
+    public ResponseEntity<Page<AppointmentResponseDTO>> getByPatient(
+            @PathVariable Long patientId,
+            @PageableDefault(page = 0, size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(
+                appointmentManagementService.getByPatient(patientId, pageable));
     }
 
     /**
@@ -57,8 +65,12 @@ public class AppointmentController {
      * @return list of appointments for the doctor
      */
     @GetMapping("/doctor/{doctorId}")
-    public ResponseEntity<List<AppointmentResponseDTO>> getByDoctor(@PathVariable Long doctorId) {
-        return ResponseEntity.ok(appointmentManagementService.getByDoctor(doctorId));
+    public ResponseEntity<Page<AppointmentResponseDTO>> getByDoctor(
+            @PathVariable Long doctorId,
+            @PageableDefault(page = 0, size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(
+                appointmentManagementService.getByDoctor(doctorId, pageable));
     }
 
     /**

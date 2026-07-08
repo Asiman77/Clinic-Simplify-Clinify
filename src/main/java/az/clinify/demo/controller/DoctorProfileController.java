@@ -3,6 +3,9 @@ package az.clinify.demo.controller;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,8 +40,10 @@ public class DoctorProfileController {
     private final AvailableSlotService availableSlotService;
 
     @GetMapping
-    public List<DoctorProfileResponse> getAllDoctors() {
-        return doctorProfileService.getAllDoctors();
+    public ResponseEntity<Page<DoctorProfileResponse>> getAllDoctors(
+            @PageableDefault(page = 0, size = 10, sort = "id") Pageable pageable) {
+
+        return ResponseEntity.ok(doctorProfileService.getAllDoctors(pageable));
     }
 
     @GetMapping("/{id}")
@@ -47,10 +52,14 @@ public class DoctorProfileController {
     }
 
     @GetMapping("/{id}/available-slots")
-    public ResponseEntity<List<AvailableSlotResponse>> getAvailableSlots(@PathVariable Long id,
+    public ResponseEntity<Page<AvailableSlotResponse>> getAvailableSlots(
+            @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam AppointmentType type) {
-        return ResponseEntity.ok(availableSlotService.getAvailableSlots(id, date, type));
+            @RequestParam AppointmentType type,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        return ResponseEntity.ok(
+                availableSlotService.getAvailableSlots(id, date, type, pageable));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

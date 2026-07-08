@@ -6,6 +6,8 @@ import az.clinify.demo.enums.AppointmentStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,7 +33,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("requestedEndTime") LocalDateTime requestedEndTime,
             @Param("statuses") List<AppointmentStatus> statuses);
 
-    List<Appointment> findByPatientId(Long patientId);
+Page<Appointment> findByPatientId(Long patientId, Pageable pageable);
 
-    List<Appointment> findByDoctorId(Long doctorId);
+Page<Appointment> findByDoctorId(Long doctorId, Pageable pageable);
 }

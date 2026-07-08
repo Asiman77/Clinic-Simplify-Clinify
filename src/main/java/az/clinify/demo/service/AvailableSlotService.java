@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +33,12 @@ public class AvailableSlotService {
     private final AppointmentRepository appointmentRepository;
 
     @Transactional(readOnly = true)
-    public List<AvailableSlotResponse> getAvailableSlots(Long doctorId, LocalDate date, AppointmentType type) {
+    public Page<AvailableSlotResponse> getAvailableSlots(
+            Long doctorId,
+            LocalDate date,
+            AppointmentType type,
+            Pageable pageable) {
+
         doctorProfileRepository.findById(doctorId)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found with id: " + doctorId));
 
@@ -47,30 +55,45 @@ public class AvailableSlotService {
 
         List<AppointmentStatus> blockingStatuses = List.of(AppointmentStatus.REQUESTED, AppointmentStatus.APPROVED);
 
-        List<Appointment> bookedAppointments = appointmentRepository
-                .findByDoctorIdAndStartTimeBetweenAndStatusIn(doctorId, dayStart, dayEnd, blockingStatuses);
+        List<Appointment> bookedAppointments = appointmentRepository.findByDoctorIdAndStartTimeBetweenAndStatusIn(
+                doctorId,
+                dayStart,
+                dayEnd,
+                blockingStatuses);
 
         List<AvailableSlotResponse> slots = new ArrayList<>();
+
         for (DoctorAvailability availability : availabilities) {
+
             LocalDateTime slotStart = LocalDateTime.of(date, availability.getStartTime());
             LocalDateTime availabilityEnd = LocalDateTime.of(date, availability.getEndTime());
 
             while (!slotStart.plusMinutes(availability.getSlotDurationMinutes()).isAfter(availabilityEnd)) {
+
                 LocalDateTime slotEnd = slotStart.plusMinutes(availability.getSlotDurationMinutes());
+
                 LocalDateTime currentSlotStart = slotStart;
                 LocalDateTime currentSlotEnd = slotEnd;
+
                 boolean booked = bookedAppointments.stream()
                         .anyMatch(appointment -> isOverlapping(
                                 currentSlotStart,
                                 currentSlotEnd,
                                 appointment.getStartTime(),
                                 appointment.getEndTime()));
+
                 slots.add(new AvailableSlotResponse(currentSlotStart, currentSlotEnd, !booked));
+
                 slotStart = slotEnd;
             }
         }
 
-        return slots;
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), slots.size());
+
+        List<AvailableSlotResponse> content = start >= slots.size() ? List.of() : slots.subList(start, end);
+
+        return new PageImpl<>(content, pageable, slots.size());
     }
 
     private boolean supportsRequestedType(AvailabilityType availabilityType, AppointmentType requestedType) {
