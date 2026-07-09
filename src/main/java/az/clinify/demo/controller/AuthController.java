@@ -1,8 +1,13 @@
 package az.clinify.demo.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.time.Duration;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +34,25 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequestDTO request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody AuthRequestDTO request,
+            HttpServletResponse servletResponse) {
+        AuthResponse authResponse = authService.login(request);
+
+        ResponseCookie cookie = ResponseCookie
+                .from("token", authResponse.getToken())
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ofHours(1))
+                .build();
+
+        servletResponse.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookie.toString());
+
+        return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/register/verify")
@@ -43,12 +65,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.setupPassword(request));
     }
 
-
-    @PreAuthorize("hasRole('RECEPTION')")   
+    @PreAuthorize("hasRole('RECEPTION')")
     @PostMapping("/register-new-user")
-public ResponseEntity<String> registerFromReception(
-        @RequestBody ReceptionRegisterRequest request) {
+    public ResponseEntity<String> registerFromReception(
+            @RequestBody ReceptionRegisterRequest request) {
 
-    return ResponseEntity.ok(authService.registerFromReception(request));
-}
+        return ResponseEntity.ok(authService.registerFromReception(request));
+    }
 }
