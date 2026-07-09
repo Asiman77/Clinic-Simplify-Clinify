@@ -109,24 +109,14 @@ public class AuthService {
     }
 
     public String setupPassword(PasswordSetupRequest request) {
-        // İstifadəçi artıq qeydiyyatdan keçibsə, təkrar yaratmayaq
         if (userRepository.findByFin(request.getFin()).isPresent()) {
-            throw new IllegalStateException("User is already registered with this FIN.");
+            User user = userRepository.findByFin(request.getFin()).get();
+
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setHasAccount(true);
+            userRepository.save(user);
+
         }
-
-        MockData mockData = mockDataService.getNewUserData(request.getFin());
-        User newUser = new User();
-        newUser.setFin(mockData.getFin());
-        newUser.setFirstName(mockData.getFirstName());
-        newUser.setLastName(mockData.getLastName());
-        newUser.setGender(mockData.getGender());
-        newUser.setBirthDate(mockData.getBirthDate());
-
-        // Front-dan gələn yeni əsas şifrəni təyin edirik
-        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
-        newUser.setHasAccount(true);
-
-        userRepository.save(newUser);
 
         return "Account created successfully! Please proceed to the login page.";
     }
