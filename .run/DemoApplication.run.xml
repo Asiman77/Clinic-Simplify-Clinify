@@ -1,11 +1,14 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="DemoApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <envs>
-      <env name="DB_URL" value="jdbc:mysql://localhost:3306/clinify?createDatabaseIfNotExist=true&amp;sessionVariables=foreign_key_checks=0" />
+      <env name="DB_URL" value="jdbc:mysql://localhost:3307/clinify?createDatabaseIfNotExist=true&amp;sessionVariables=foreign_key_checks=0" />
       <env name="DB_USERNAME" value="root" />
-      <env name="DB_PASSWORD" value="asiman2006M" />
+      <env name="DB_PASSWORD" value="revan123" />
       <env name="JWT_SECRET" value="7e98c00f6c259af441bd82143bf0dea5f8d8d467718318e4fc6635660ea0de48" />
       <env name="SMS_API_KEY" value="1sk_DeEsV9HMppk9RSH7DMDS21RlVLNUhDN5VMwIxCqxeTRxpZpByqD1H0OxqzH7HDAmxJ4lgjCoMwOaFS93mHaCF" />
+      <env name="CLOUDINARY_CLOUD_NAME" value="dwgkiu8oa" />
+      <env name="CLOUDINARY_API_KEY" value="813283992256968 " />
+      <env name="CLOUDINARY_API_SECRET" value="TV7u-8bLEpFdiTyFBMUT69moZoE" />
     </envs>
     <module name="demo" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="az.clinify.demo.DemoApplication" />
