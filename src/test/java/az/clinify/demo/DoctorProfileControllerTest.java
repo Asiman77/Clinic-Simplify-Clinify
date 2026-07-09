@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -67,7 +68,7 @@ class DoctorProfileControllerTest {
     @MockitoBean
     private UserDetailsService userDetailsService;
 
-    @Test
+   @Test
 @WithMockUser
 void getAllDoctors_ShouldReturnOk() throws Exception {
 
@@ -91,7 +92,11 @@ void getAllDoctors_ShouldReturnOk() throws Exception {
             1
     );
 
-    when(doctorProfileService.getAllDoctors(any(Pageable.class)))
+    when(doctorProfileService.getAllDoctors(
+            any(),
+            any(),
+            any(),
+            any(Pageable.class)))
             .thenReturn(page);
 
     mockMvc.perform(get("/api/doctors")
@@ -104,7 +109,12 @@ void getAllDoctors_ShouldReturnOk() throws Exception {
             .andExpect(jsonPath("$.totalElements").value(1))
             .andExpect(jsonPath("$.totalPages").value(1));
 
-    verify(doctorProfileService).getAllDoctors(any(Pageable.class));
+    verify(doctorProfileService).getAllDoctors(
+            isNull(),
+            isNull(),
+            isNull(),
+            any(Pageable.class)
+    );
 }
     @Test
     @WithMockUser
