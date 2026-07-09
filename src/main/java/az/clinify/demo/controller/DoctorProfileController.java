@@ -41,9 +41,17 @@ public class DoctorProfileController {
 
     @GetMapping
     public ResponseEntity<Page<DoctorProfileResponse>> getAllDoctors(
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String specialization,
+            @RequestParam(required = false) Integer experienceYears,
             @PageableDefault(page = 0, size = 10, sort = "id") Pageable pageable) {
 
-        return ResponseEntity.ok(doctorProfileService.getAllDoctors(pageable));
+        return ResponseEntity.ok(
+                doctorProfileService.getAllDoctors(
+                        departmentId,
+                        specialization,
+                        experienceYears,
+                        pageable));
     }
 
     @GetMapping("/{id}")

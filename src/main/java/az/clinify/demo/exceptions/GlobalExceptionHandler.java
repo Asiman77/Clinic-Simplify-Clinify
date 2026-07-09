@@ -9,6 +9,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+        @ExceptionHandler(UnauthorizedException .class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException  ex) {
+        ErrorResponse error = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "unauthorized", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     @ExceptionHandler(BaseNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleBaseNotFound(BaseNotFoundException ex) {
         ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Not found", ex.getMessage());

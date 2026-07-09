@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import az.clinify.demo.dto.request.ReceptionRegisterRequest;
 import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.BaseNotFoundException;
+import az.clinify.demo.exceptions.UnauthorizedException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class MockDataService {
 
         // 2. İmza (parol) uyğun gəlməyəndə exception atırıq
         if (!mockData.getPassword().equals(incomingSignature)) {
-            throw new BadCredentialsException("signature is false");
+            throw new UnauthorizedException ("signature is false");
         }
         return true;
     }
