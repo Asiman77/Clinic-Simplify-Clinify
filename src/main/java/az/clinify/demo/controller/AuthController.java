@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import az.clinify.demo.dto.request.AuthRequestDTO;
@@ -19,6 +20,7 @@ import az.clinify.demo.dto.request.ReceptionRegisterRequest;
 import az.clinify.demo.dto.response.AuthResponse;
 import az.clinify.demo.dto.response.FinCheckResponse;
 import az.clinify.demo.dto.response.RegisterVerifyResponse;
+import az.clinify.demo.dto.response.UserResponse;
 import az.clinify.demo.service.AuthService;
 
 @RestController
@@ -72,6 +74,11 @@ public class AuthController {
                 expiredCookie.toString());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> me(Authentication authentication) {
+        return ResponseEntity.ok(authService.getCurrentUser(authentication.getName()));
     }
 
     @PostMapping("/register/verify")
