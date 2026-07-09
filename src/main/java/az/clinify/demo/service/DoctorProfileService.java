@@ -39,9 +39,30 @@ public class DoctorProfileService {
     private final DoctorProfileMapper doctorProfileMapper;
 
     @Transactional(readOnly = true)
-    public Page<DoctorProfileResponse> getAllDoctors(Pageable pageable) {
-        return doctorProfileRepository.findByActiveTrue(pageable)
-                .map(doctorProfileMapper::toResponse);
+    public Page<DoctorProfileResponse> getAllDoctors(
+            Long departmentId,
+            String specialization,
+            Integer experienceYears,
+            Pageable pageable) {
+
+        Page<DoctorProfile> doctors;
+
+        if (departmentId == null &&
+                specialization == null &&
+                experienceYears == null) {
+
+            doctors = doctorProfileRepository.findAll(pageable);
+
+        } else {
+
+            doctors = doctorProfileRepository.findByFilters(
+                    departmentId,
+                    specialization,
+                    experienceYears,
+                    pageable);
+        }
+
+        return doctors.map(doctorProfileMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
