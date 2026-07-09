@@ -81,6 +81,7 @@ public class SecurityConfig {
                         // Auth endpoints - public
                         .requestMatchers(HttpMethod.POST, "/api/auth/check-fin").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register/setup-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register-new-user").authenticated()

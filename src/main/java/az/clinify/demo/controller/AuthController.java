@@ -55,6 +55,25 @@ public class AuthController {
         return ResponseEntity.ok(authResponse);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            HttpServletResponse servletResponse) {
+        ResponseCookie expiredCookie = ResponseCookie
+                .from("token", "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ZERO)
+                .build();
+
+        servletResponse.addHeader(
+                HttpHeaders.SET_COOKIE,
+                expiredCookie.toString());
+
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/register/verify")
     public ResponseEntity<RegisterVerifyResponse> verifyAndRegister(@Valid @RequestBody AuthRequestDTO request) {
         return ResponseEntity.ok(authService.registerFromMock(request));
