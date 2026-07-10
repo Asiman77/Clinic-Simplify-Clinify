@@ -38,8 +38,12 @@ public class AuthService {
     private final UserMapper userMapper;
 
     public FinCheckResponse checkFin(FinCheckRequest request) {
+        boolean present = false;
         String fin = request.getFin();
-        boolean present = userRepository.findByFin(fin).get().isHasAccount();
+        User currUser = userRepository.findByFin(fin).orElse(null);
+        if (currUser != null) {
+            present = userRepository.findByFin(fin).get().isHasAccount();
+        }
 
         if (present) {
             return new FinCheckResponse(fin, "LOGIN_REQUIRED", "Please insert password");
@@ -83,6 +87,19 @@ public class AuthService {
     public RegisterVerifyResponse registerFromMock(AuthRequestDTO request) {
 
         mockDataService.verifySignature(request.getFin(), request.getPassword());
+        User currUser = userRepository.findByFin(request.getFin()).orElse(null);
+
+        if (currUser == null) {
+            User newUser = new User();
+
+            newUser.setFin(currUser.getFin());
+            newUser.setFirstName(currUser.getFirstName());
+            newUser.setLastName(currUser.getLastName());
+            newUser.setBirthDate(currUser.getBirthDate());
+            newUser.setGender(currUser.getGender());
+
+            userRepository.save(newUser);
+        }
 
         return new RegisterVerifyResponse(
                 request.getFin(),
