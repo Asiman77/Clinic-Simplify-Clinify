@@ -1,6 +1,5 @@
 package az.clinify.demo.dto.response;
 
-import az.clinify.demo.enums.LabStatuses;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
