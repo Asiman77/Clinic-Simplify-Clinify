@@ -6,16 +6,20 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class AuthResponse {
 
+    @JsonIgnore
     private String token;
-    private final String tokenType = "Bearer";
+
     private String fin;
+
     private Set<String> roles;
 
-    
 }

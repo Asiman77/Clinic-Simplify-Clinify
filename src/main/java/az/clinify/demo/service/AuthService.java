@@ -9,12 +9,13 @@ import az.clinify.demo.dto.request.ReceptionRegisterRequest;
 import az.clinify.demo.dto.response.AuthResponse;
 import az.clinify.demo.dto.response.FinCheckResponse;
 import az.clinify.demo.dto.response.RegisterVerifyResponse;
+import az.clinify.demo.dto.response.UserResponse;
 import az.clinify.demo.entity.Role;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.RoleType;
 import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.UserNotFoundException;
-import az.clinify.demo.mockServer.MockData;
+import az.clinify.demo.mapper.UserMapper;
 import az.clinify.demo.mockServer.MockDataService;
 import az.clinify.demo.repository.UserRepository;
 import az.clinify.demo.security.JwtTokenProvider;
@@ -24,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Service
@@ -35,6 +35,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final MockDataService mockDataService;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     public FinCheckResponse checkFin(FinCheckRequest request) {
         String fin = request.getFin();
@@ -71,6 +72,12 @@ public class AuthService {
         response.setRoles(rolesList);
 
         return response;
+    }
+
+    public UserResponse getCurrentUser(String fin) {
+        User user = userRepository.findByFin(fin)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return userMapper.toResponse(user);
     }
 
     public RegisterVerifyResponse registerFromMock(AuthRequestDTO request) {

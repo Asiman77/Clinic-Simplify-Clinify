@@ -16,9 +16,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import az.clinify.demo.security.JwtAuthenticationFilter;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -33,7 +35,29 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE",
+                        "OPTIONS"));
 
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration);
+
+        return source;
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(UserDetailsService userDetailsService) {
@@ -45,19 +69,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**"
-                        ).permitAll()
+                                "/v3/api-docs/**")
+                        .permitAll()
                         // Auth endpoints - public
                         .requestMatchers(HttpMethod.POST, "/api/auth/check-fin").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register/setup-password").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register-new-user").authenticated()
 
                         .requestMatchers(HttpMethod.GET, "/api/departments/**").permitAll()
@@ -72,7 +99,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/activate").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/doctors/*/deactivate").hasRole("ADMIN")
 
-
                         .requestMatchers(HttpMethod.GET, "/api/availabilities").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/availabilities/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/availabilities").hasAnyRole("ADMIN", "DOCTOR")
@@ -82,15 +108,21 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
                         .requestMatchers(HttpMethod.GET, "/api/appointments").hasAnyRole("ADMIN", "RECEPTION")
-                        .requestMatchers(HttpMethod.GET, "/api/appointments/*").hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "RECEPTION")
-                        .requestMatchers(HttpMethod.GET, "/api/appointments/patient/**").hasAnyRole("ADMIN", "PATIENT", "RECEPTION")
-                        .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/**").hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
-                        .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/status").hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/*")
+                        .hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "RECEPTION")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/patient/**")
+                        .hasAnyRole("ADMIN", "PATIENT", "RECEPTION")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/**")
+                        .hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
+                        .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/status")
+                        .hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
 
-                        .requestMatchers(HttpMethod.GET, "/api/records/**").hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "LAB_TECHNICIAN")
+                        .requestMatchers(HttpMethod.GET, "/api/records/**")
+                        .hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "LAB_TECHNICIAN")
                         .requestMatchers(HttpMethod.POST, "/api/records").hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/records/**").hasAnyRole("ADMIN", "DOCTOR")
-                        .requestMatchers(HttpMethod.PATCH, "/api/records/*/status").hasAnyRole("ADMIN", "DOCTOR", "LAB_TECHNICIAN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/records/*/status")
+                        .hasAnyRole("ADMIN", "DOCTOR", "LAB_TECHNICIAN")
 
                         .anyRequest().permitAll());
 
