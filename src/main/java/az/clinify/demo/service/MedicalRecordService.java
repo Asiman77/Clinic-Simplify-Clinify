@@ -41,27 +41,13 @@ public class MedicalRecordService {
         DoctorProfile doctor = doctorProfileRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        MedicalRecord medicalRecord = new MedicalRecord();
-        medicalRecord.setPatient(patient);
-        medicalRecord.setDoctor(doctor);
-        medicalRecord.setDiagnosis(request.getDiagnosis());
-        medicalRecord.setSymptoms(request.getSymptoms());
-        medicalRecord.setReceipt(request.getReceipt());
-        medicalRecord.setRecordDate(LocalDateTime.now());
+        MedicalRecord medicalRecord =
+                medicalRecordMapper.toEntity(request, patient, doctor);
 
-        if (request.getLabTests() != null && !request.getLabTests().isEmpty()) {
-            request.getLabTests().forEach(labTest -> {
-                LabResponse labResponse = new LabResponse();
-                labResponse.setMedicalRecord(medicalRecord);
-                labResponse.setTestName(labTest.getTestName());
-                labResponse.setNote(labTest.getNote());
-                labResponse.setStatus(LabStatuses.PENDING);
+        MedicalRecord savedMedicalRecord =
+                medicalRecordRepository.save(medicalRecord);
 
-                medicalRecord.getLabResponses().add(labResponse);
-            });
-        }
-
-        return medicalRecordMapper.toResponse(medicalRecordRepository.save(medicalRecord));
+        return medicalRecordMapper.toResponse(savedMedicalRecord);
     }
 
     public MedicalRecordResponseDTO returnMedicalRecord(Long id) {
