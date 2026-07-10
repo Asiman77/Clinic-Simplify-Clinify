@@ -1,7 +1,9 @@
 package az.clinify.demo.mapper;
 
+import az.clinify.demo.dto.request.CreateDoctorAvailabilityRequest;
 import az.clinify.demo.dto.response.DoctorAvailabilityResponse;
 import az.clinify.demo.entity.DoctorAvailability;
+import az.clinify.demo.entity.DoctorProfile;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -35,4 +37,28 @@ public class DoctorAvailabilityMapper {
         return response;
     }
 
+    public DoctorAvailability toEntity(
+            CreateDoctorAvailabilityRequest request,
+            DoctorProfile doctor
+    ) {
+        if (request == null) {
+            return null;
+        }
+
+        DoctorAvailability availability = new DoctorAvailability();
+
+        availability.setDoctor(doctor);
+        availability.setDayOfWeek(request.getDayOfWeek());
+        availability.setStartTime(request.getStartTime());
+        availability.setEndTime(request.getEndTime());
+        availability.setSlotDurationMinutes(request.getSlotDurationMinutes());
+        availability.setAvailabilityType(request.getAvailabilityType());
+        availability.setActive(
+                request.getActive() != null
+                        ? request.getActive()
+                        : true
+        );
+
+        return availability;
+    }
 }
