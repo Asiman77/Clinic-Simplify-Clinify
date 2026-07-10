@@ -16,6 +16,8 @@ import az.clinify.demo.enums.RoleType;
 import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.UserMapper;
+import az.clinify.demo.mockServer.MockData;
+import az.clinify.demo.mockServer.MockDataRepository;
 import az.clinify.demo.mockServer.MockDataService;
 import az.clinify.demo.repository.UserRepository;
 import az.clinify.demo.security.JwtTokenProvider;
@@ -87,19 +89,17 @@ public class AuthService {
     public RegisterVerifyResponse registerFromMock(AuthRequestDTO request) {
 
         mockDataService.verifySignature(request.getFin(), request.getPassword());
-        User currUser = userRepository.findByFin(request.getFin()).orElse(null);
+        MockData mockUser = mockDataService.getNewUserData(request.getFin());
 
-        if (currUser == null) {
-            User newUser = new User();
+        User newUser = new User();
 
-            newUser.setFin(currUser.getFin());
-            newUser.setFirstName(currUser.getFirstName());
-            newUser.setLastName(currUser.getLastName());
-            newUser.setBirthDate(currUser.getBirthDate());
-            newUser.setGender(currUser.getGender());
+        newUser.setFin(mockUser.getFin());
+        newUser.setFirstName(mockUser.getFirstName());
+        newUser.setLastName(mockUser.getLastName());
+        newUser.setBirthDate(mockUser.getBirthDate());
+        newUser.setGender(mockUser.getGender());
 
-            userRepository.save(newUser);
-        }
+        userRepository.save(newUser);
 
         return new RegisterVerifyResponse(
                 request.getFin(),
