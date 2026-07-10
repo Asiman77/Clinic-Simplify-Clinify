@@ -16,6 +16,8 @@ import az.clinify.demo.enums.RoleType;
 import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.UserMapper;
+import az.clinify.demo.mockServer.MockData;
+import az.clinify.demo.mockServer.MockDataRepository;
 import az.clinify.demo.mockServer.MockDataService;
 import az.clinify.demo.repository.UserRepository;
 import az.clinify.demo.security.JwtTokenProvider;
@@ -38,8 +40,12 @@ public class AuthService {
     private final UserMapper userMapper;
 
     public FinCheckResponse checkFin(FinCheckRequest request) {
+        boolean present = false;
         String fin = request.getFin();
-        boolean present = userRepository.findByFin(fin).get().isHasAccount();
+        User currUser = userRepository.findByFin(fin).orElse(null);
+        if (currUser != null) {
+            present = userRepository.findByFin(fin).get().isHasAccount();
+        }
 
         if (present) {
             return new FinCheckResponse(fin, "LOGIN_REQUIRED", "Please insert password");
@@ -83,6 +89,17 @@ public class AuthService {
     public RegisterVerifyResponse registerFromMock(AuthRequestDTO request) {
 
         mockDataService.verifySignature(request.getFin(), request.getPassword());
+        MockData mockUser = mockDataService.getNewUserData(request.getFin());
+
+        User newUser = new User();
+
+        newUser.setFin(mockUser.getFin());
+        newUser.setFirstName(mockUser.getFirstName());
+        newUser.setLastName(mockUser.getLastName());
+        newUser.setBirthDate(mockUser.getBirthDate());
+        newUser.setGender(mockUser.getGender());
+
+        userRepository.save(newUser);
 
         return new RegisterVerifyResponse(
                 request.getFin(),
