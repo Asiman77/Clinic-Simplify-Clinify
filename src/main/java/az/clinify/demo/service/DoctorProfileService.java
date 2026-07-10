@@ -1,7 +1,6 @@
 package az.clinify.demo.service;
 
 import java.util.HashSet;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

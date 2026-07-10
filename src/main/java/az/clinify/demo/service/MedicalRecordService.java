@@ -5,10 +5,8 @@ import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
 import az.clinify.demo.entity.DoctorProfile;
-import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.entity.User;
-import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.exceptions.MedicalRecordNotFoundException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.MedicalRecordMapper;
@@ -23,8 +21,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -41,27 +38,13 @@ public class MedicalRecordService {
         DoctorProfile doctor = doctorProfileRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-        MedicalRecord medicalRecord = new MedicalRecord();
-        medicalRecord.setPatient(patient);
-        medicalRecord.setDoctor(doctor);
-        medicalRecord.setDiagnosis(request.getDiagnosis());
-        medicalRecord.setSymptoms(request.getSymptoms());
-        medicalRecord.setReceipt(request.getReceipt());
-        medicalRecord.setRecordDate(LocalDateTime.now());
+        MedicalRecord medicalRecord =
+                medicalRecordMapper.toEntity(request, patient, doctor);
 
-        if (request.getLabTests() != null && !request.getLabTests().isEmpty()) {
-            request.getLabTests().forEach(labTest -> {
-                LabResponse labResponse = new LabResponse();
-                labResponse.setMedicalRecord(medicalRecord);
-                labResponse.setTestName(labTest.getTestName());
-                labResponse.setNote(labTest.getNote());
-                labResponse.setStatus(LabStatuses.PENDING);
+        MedicalRecord savedMedicalRecord =
+                medicalRecordRepository.save(medicalRecord);
 
-                medicalRecord.getLabResponses().add(labResponse);
-            });
-        }
-
-        return medicalRecordMapper.toResponse(medicalRecordRepository.save(medicalRecord));
+        return medicalRecordMapper.toResponse(savedMedicalRecord);
     }
 
     public MedicalRecordResponseDTO returnMedicalRecord(Long id) {

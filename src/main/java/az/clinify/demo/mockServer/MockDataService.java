@@ -1,11 +1,9 @@
 package az.clinify.demo.mockServer;
 
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import az.clinify.demo.dto.request.ReceptionRegisterRequest;
 import az.clinify.demo.exceptions.BaseBadRequestException;
-import az.clinify.demo.exceptions.BaseNotFoundException;
 import az.clinify.demo.exceptions.UnauthorizedException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;

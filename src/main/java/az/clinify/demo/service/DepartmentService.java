@@ -47,10 +47,7 @@ public class DepartmentService {
             throw new DepartmentAlreadyExistsException(departmentName);
         }
 
-        Department department = new Department();
-        department.setName(departmentName);
-        department.setDescription(request.getDescription());
-        department.setActive(request.getActive() != null ? request.getActive() : true);
+        Department department = departmentMapper.toEntity(request);
 
         Department savedDepartment = departmentRepository.save(department);
 

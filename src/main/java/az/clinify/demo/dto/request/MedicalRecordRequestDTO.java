@@ -2,7 +2,6 @@ package az.clinify.demo.dto.request;
 
 import java.util.List;
 
-import az.clinify.demo.enums.LabStatuses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

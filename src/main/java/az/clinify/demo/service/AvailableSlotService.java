@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import az.clinify.demo.dto.request.AppointmentStatusRequest;
 import az.clinify.demo.dto.response.AvailableSlotResponse;
 import az.clinify.demo.entity.Appointment;
 import az.clinify.demo.entity.DoctorAvailability;
