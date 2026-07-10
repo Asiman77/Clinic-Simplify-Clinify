@@ -8,7 +8,6 @@ import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.exceptions.DoctorNotAvailableException;
 import az.clinify.demo.exceptions.DoctorNotFoundException;
 import az.clinify.demo.mapper.DoctorAvailabilityMapper;
-import az.clinify.demo.mapper.DoctorProfileMapper;
 import az.clinify.demo.repository.DoctorAvailabilityRepository;
 import az.clinify.demo.repository.DoctorProfileRepository;
 import jakarta.transaction.Transactional;

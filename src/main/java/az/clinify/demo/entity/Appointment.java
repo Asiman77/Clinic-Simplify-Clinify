@@ -1,6 +1,5 @@
 package az.clinify.demo.entity;
 
-import az.clinify.demo.entity.BaseEntity;
 import az.clinify.demo.enums.AppointmentStatus;
 import az.clinify.demo.enums.AppointmentType;
 import jakarta.persistence.*;
