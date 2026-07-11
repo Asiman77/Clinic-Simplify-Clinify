@@ -1,5 +1,10 @@
 # Clinic-Simplify-Clinify
 
+Clinify is a healthcare management system designed to streamline communication and workflow between patients and healthcare providers. The platform enables patient registration, doctor profile management, appointment scheduling, medical record management, and laboratory response tracking through a secure RESTful API.
+
+The backend is built with **Spring Boot** and follows a layered architecture with JWT-based authentication, role-based authorization, and RESTful design principles. The system supports multiple user roles, including **Administrator**, **Receptionist**, **Doctor**, **Patient**, and **Lab Technician**, each with dedicated permissions.
+
+
 ### Team Members
 
 - **Asiman Mirzaliyev** — [GitHub](https://github.com/Asiman77) | [LinkedIn](https://www.linkedin.com/in/asiman-dev/)
@@ -15,5 +20,20 @@
 - [Live application link]()
 
 ---
+
+# Documentation Guide
+
+The following documents provide detailed information about the project.
+
+- [API Reference](docs/API-reference.md)
+- [Authentication Flow](docs/auth-flow.md)
+- [Installation Instructions](docs/installation-instructions.md)
+- [Development Instructions](docs/development-instructions.md)
+- [Environment Variables](docs/environment-variables.md)
+- [Technologies Used](docs/technologies-used.md)
+- [Entity Relationship Diagram (ERD)](docs/EER-Diagram.png)
+
+---
+
 
 
