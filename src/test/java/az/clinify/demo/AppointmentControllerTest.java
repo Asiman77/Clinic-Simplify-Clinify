@@ -91,22 +91,21 @@ class AppointmentControllerTest {
         }
 
         @Test
-        void getAllAppointments_ShouldReturnOk_WhenAdmin() throws Exception {
+        void getAppointmentById_ShouldReturnOk_WhenAdmin()
+                        throws Exception {
 
-                when(appointmentManagementService.getAllAppointments())
-                                .thenReturn(List.of(sampleResponse()));
+                when(appointmentManagementService.getAppointmentById(1L))
+                                .thenReturn(sampleResponse());
 
-                mockMvc.perform(get("/api/appointments")
+                mockMvc.perform(get("/api/appointments/{id}", 1L)
                                 .with(authentication(new UsernamePasswordAuthenticationToken(
                                                 "admin",
                                                 null,
                                                 List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))))))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$[0].id").value(1))
-                                .andExpect(jsonPath("$[0].status").value("REQUESTED"));
+                                .andExpect(jsonPath("$.id").value(1));
 
-                verify(appointmentManagementService)
-                                .getAllAppointments();
+                verify(appointmentManagementService).getAppointmentById(1L);
         }
 
         @Test
@@ -121,25 +120,6 @@ class AppointmentControllerTest {
         }
 
         @Test
-        @WithMockUser(roles = "PATIENT")
-        void getAppointmentById_ShouldReturnOk() throws Exception {
-
-                when(appointmentManagementService.getAppointmentById(1L))
-                                .thenReturn(sampleResponse());
-
-                mockMvc.perform(get("/api/appointments/{id}", 1L)
-                                .with(authentication(new UsernamePasswordAuthenticationToken(
-                                                "patient",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))))))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.id").value(1));
-
-                verify(appointmentManagementService)
-                                .getAppointmentById(1L);
-        }
-
-        @Test
         @WithMockUser(roles = "DOCTOR")
         void getByPatient_ShouldReturnForbidden_WhenDoctor() throws Exception {
 
@@ -148,6 +128,35 @@ class AppointmentControllerTest {
 
                 verify(appointmentManagementService, never())
                                 .getByPatient(anyLong(), any(Pageable.class));
+        }
+
+        @Test
+        void getCurrentPatientAppointments_ShouldReturnOk()
+                        throws Exception {
+                Page<AppointmentResponseDTO> page = new PageImpl<>(
+                                List.of(sampleResponse()),
+                                PageRequest.of(0, 10),
+                                1);
+
+                when(appointmentManagementService.getCurrentPatientAppointments(
+                                eq("patient"),
+                                any(Pageable.class)))
+                                .thenReturn(page);
+
+                mockMvc.perform(get("/api/appointments/mine")
+                                .param("page", "0")
+                                .param("size", "10")
+                                .with(authentication(new UsernamePasswordAuthenticationToken(
+                                                "patient",
+                                                null,
+                                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))))))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.totalElements").value(1));
+
+                verify(appointmentManagementService)
+                                .getCurrentPatientAppointments(
+                                                eq("patient"),
+                                                any(Pageable.class));
         }
 
         @Test
@@ -177,32 +186,6 @@ class AppointmentControllerTest {
         }
 
         @Test
-        void getByPatient_ShouldReturnOk() throws Exception {
-
-                Page<AppointmentResponseDTO> page = new PageImpl<>(
-                                List.of(sampleResponse()),
-                                PageRequest.of(0, 10),
-                                1);
-
-                when(appointmentManagementService.getByPatient(eq(10L), any(Pageable.class)))
-                                .thenReturn(page);
-
-                mockMvc.perform(get("/api/appointments/patient/{id}", 10L)
-                                .param("page", "0")
-                                .param("size", "10")
-                                .with(authentication(new UsernamePasswordAuthenticationToken(
-                                                "patient",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))))))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content[0].patientId").value(10))
-                                .andExpect(jsonPath("$.totalElements").value(1));
-
-                verify(appointmentManagementService)
-                                .getByPatient(eq(10L), any(Pageable.class));
-        }
-
-        @Test
         @WithMockUser(roles = "PATIENT")
         void getByDoctor_ShouldReturnForbidden_WhenPatient() throws Exception {
 
@@ -211,6 +194,38 @@ class AppointmentControllerTest {
 
                 verify(appointmentManagementService, never())
                                 .getByDoctor(anyLong(), any(Pageable.class));
+        }
+
+        @Test
+        void getByPatient_ShouldReturnOk_WhenReception()
+                        throws Exception {
+
+                Page<AppointmentResponseDTO> page = new PageImpl<>(
+                                List.of(sampleResponse()),
+                                PageRequest.of(0, 10),
+                                1);
+
+                when(appointmentManagementService.getByPatient(
+                                eq(10L),
+                                any(Pageable.class)))
+                                .thenReturn(page);
+
+                mockMvc.perform(get("/api/appointments/patient/{id}",
+                                10L)
+                                .param("page", "0")
+                                .param("size", "10")
+                                .with(authentication(new UsernamePasswordAuthenticationToken(
+                                                "reception",
+                                                null,
+                                                List.of(new SimpleGrantedAuthority("ROLE_RECEPTION"))))))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content[0].patientId")
+                                                .value(10))
+                                .andExpect(jsonPath("$.totalElements").value(1));
+
+                verify(appointmentManagementService)
+                                .getByPatient(eq(10L),
+                                                any(Pageable.class));
         }
 
         @Test
