@@ -54,6 +54,19 @@ public class AppointmentController {
                 .body(response);
     }
 
+    @PreAuthorize("hasRole('PATIENT')")
+    @GetMapping("/mine")
+    public ResponseEntity<Page<AppointmentResponseDTO>> getCurrentPatientAppointments(
+            Authentication authentication,
+            @PageableDefault(page = 0, size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<AppointmentResponseDTO> appointments = appointmentManagementService
+                .getCurrentPatientAppointments(
+                        authentication.getName(),
+                        pageable);
+
+        return ResponseEntity.ok(appointments);
+    }
+
     @PreAuthorize("hasRole('RECEPTION')")
     @PostMapping("/walk-in")
     public ResponseEntity<AppointmentResponseDTO> createWalkInAppointment(
@@ -70,6 +83,7 @@ public class AppointmentController {
      * @param patientId id of the patient
      * @return list of appointments for the patient
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTION')")
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<Page<AppointmentResponseDTO>> getByPatient(
             @PathVariable Long patientId,
