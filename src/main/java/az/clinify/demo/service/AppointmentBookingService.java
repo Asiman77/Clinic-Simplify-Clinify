@@ -9,7 +9,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import az.clinify.demo.dto.request.AppointmentRequestDTO;
 import az.clinify.demo.dto.request.PatientAppointmentRequestDTO;
 import az.clinify.demo.dto.request.WalkInAppointmentRequestDTO;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
@@ -39,54 +38,6 @@ public class AppointmentBookingService {
         private final DoctorAvailabilityRepository doctorAvailabilityRepository;
         private final UserRepository userRepository;
         private final AppointmentMapper appointmentMapper;
-
-        @Transactional
-        public AppointmentResponseDTO createAppointment(AppointmentRequestDTO request) {
-                User patient = userRepository.findById(request.getPatientId())
-                                .orElseThrow(() -> new UserNotFoundException(
-                                                "Patient not found with id: " + request.getPatientId()));
-
-                DoctorProfile doctor = doctorProfileRepository.findById(request.getDoctorId())
-                                .orElseThrow(() -> new DoctorNotFoundException(
-                                                "Doctor not found with id: " + request.getDoctorId()));
-
-                User createdBy = patient;
-                DayOfWeek dayOfWeek = request.getStartTime().getDayOfWeek();
-
-                List<DoctorAvailability> availabilities = doctorAvailabilityRepository
-                                .findByDoctorIdAndDayOfWeekAndActiveTrue(doctor.getId(), dayOfWeek);
-
-                DoctorAvailability matchedAvailability = availabilities.stream()
-                                .filter(availability -> supportsRequestedType(availability.getAvailabilityType(),
-                                                request.getType()))
-                                .filter(availability -> isStartTimeInsideAvailability(request.getStartTime(),
-                                                availability))
-                                .filter(availability -> isStartTimeAlignedWithSlotDuration(request.getStartTime(),
-                                                availability))
-                                .findFirst()
-                                .orElseThrow(() -> new DoctorNotAvailableException(
-                                                "Doctor is not available for the selected time and appointment type"));
-
-                LocalDateTime endTime = request.getStartTime()
-                                .plusMinutes(matchedAvailability.getSlotDurationMinutes());
-
-                List<AppointmentStatus> blockingStatuses = List.of(AppointmentStatus.REQUESTED,
-                                AppointmentStatus.APPROVED);
-
-                boolean hasConflict = appointmentRepository.existsConflictingAppointment(
-                                doctor.getId(),
-                                request.getStartTime(),
-                                endTime,
-                                blockingStatuses);
-
-                if (hasConflict) {
-                        throw new AppointmentConflictException("Selected appointment slot is already booked");
-                }
-
-                Appointment appointment = appointmentMapper.toEntity(request, patient, doctor, createdBy, endTime);
-                Appointment savedAppointment = appointmentRepository.save(appointment);
-                return appointmentMapper.toResponse(savedAppointment);
-        }
 
         @Transactional
         public AppointmentResponseDTO createPatientAppointment(

@@ -44,7 +44,6 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponseDTO> createPatientAppointment(
             @Valid @RequestBody PatientAppointmentRequestDTO request,
             Authentication authentication) {
-
         AppointmentResponseDTO response = appointmentBookingService
                 .createPatientAppointment(
                         request,

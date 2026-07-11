@@ -1,6 +1,5 @@
 package az.clinify.demo.mapper;
 
-import az.clinify.demo.dto.request.AppointmentRequestDTO;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
 import az.clinify.demo.entity.Appointment;
 import az.clinify.demo.entity.DoctorProfile;
@@ -25,7 +24,6 @@ public class AppointmentMapper {
             String reason) {
 
         Appointment appointment = new Appointment();
-
         appointment.setPatient(patient);
         appointment.setDoctor(doctor);
         appointment.setCreatedBy(createdBy);
@@ -35,24 +33,6 @@ public class AppointmentMapper {
         appointment.setEndTime(endTime);
         appointment.setReason(reason);
 
-        return appointment;
-    }
-
-    public Appointment toEntity(AppointmentRequestDTO request, User patient, DoctorProfile doctor, User createdBy,
-            LocalDateTime endTime) {
-        if (request == null) {
-            return null;
-        }
-
-        Appointment appointment = new Appointment();
-        appointment.setPatient(patient);
-        appointment.setDoctor(doctor);
-        appointment.setCreatedBy(createdBy);
-        appointment.setType(request.getType());
-        appointment.setStatus(AppointmentStatus.REQUESTED);
-        appointment.setStartTime(request.getStartTime());
-        appointment.setEndTime(endTime);
-        appointment.setReason(request.getReason());
         return appointment;
     }
 
