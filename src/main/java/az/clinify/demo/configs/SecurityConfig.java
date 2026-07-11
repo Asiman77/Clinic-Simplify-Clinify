@@ -106,6 +106,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/availabilities/*/status").hasAnyRole("ADMIN", "DOCTOR")
                         .requestMatchers(HttpMethod.DELETE, "/api/availabilities/**").hasAnyRole("ADMIN", "DOCTOR")
 
+                        .requestMatchers(HttpMethod.POST,"/api/appointments/walk-in").hasRole("RECEPTION")
                         .requestMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
                         .requestMatchers(HttpMethod.GET, "/api/appointments").hasAnyRole("ADMIN", "RECEPTION")
                         .requestMatchers(HttpMethod.GET, "/api/appointments/*")
