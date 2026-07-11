@@ -116,6 +116,7 @@ public class SecurityConfig {
                         .hasAnyRole("ADMIN", "RECEPTION")
                         .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/**")
                         .hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
+                        .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/cancel").hasRole("PATIENT")
                         .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/status")
                         .hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
 

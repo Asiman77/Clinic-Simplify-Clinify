@@ -91,6 +91,18 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentManagementService.getByPatient(patientId, pageable));
     }
 
+    @PreAuthorize("hasRole('PATIENT')")
+    @PatchMapping("/{appointmentId}/cancel")
+    public ResponseEntity<AppointmentResponseDTO> cancelCurrentPatientAppointment(
+            @PathVariable Long appointmentId,
+            Authentication authentication) {
+        AppointmentResponseDTO response = appointmentManagementService
+                .cancelCurrentPatientAppointment(
+                        appointmentId,
+                        authentication.getName());
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * Returns all appointments belonging to the given doctor.
      *

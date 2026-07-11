@@ -4,7 +4,10 @@ import az.clinify.demo.dto.request.AppointmentStatusRequest;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
 import az.clinify.demo.entity.Appointment;
 import az.clinify.demo.entity.User;
+import az.clinify.demo.enums.AppointmentStatus;
 import az.clinify.demo.exceptions.AppointmentNotFoundException;
+import az.clinify.demo.exceptions.BaseBadRequestException;
+import az.clinify.demo.exceptions.InvalidStatusException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.AppointmentMapper;
 import az.clinify.demo.repository.AppointmentRepository;
@@ -16,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -66,6 +70,42 @@ public class AppointmentManagementService {
     public Page<AppointmentResponseDTO> getByDoctor(Long doctorId, Pageable pageable) {
         return appointmentRepository.findByDoctorId(doctorId, pageable)
                 .map(appointmentMapper::toResponse);
+    }
+
+    @Transactional
+    public AppointmentResponseDTO cancelCurrentPatientAppointment(
+            Long appointmentId,
+            String authenticatedFin) {
+        User patient = userRepository.findByFin(authenticatedFin)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "Authenticated patient could not be found"));
+
+        Appointment appointment = appointmentRepository
+                .findByIdAndPatientId(
+                        appointmentId,
+                        patient.getId())
+                .orElseThrow(() -> new AppointmentNotFoundException(
+                        "Appointment could not be found"));
+
+        AppointmentStatus currentStatus = appointment.getStatus();
+
+        boolean canBeCancelled = currentStatus == AppointmentStatus.REQUESTED
+                || currentStatus == AppointmentStatus.APPROVED;
+
+        if (!canBeCancelled) {
+            throw new InvalidStatusException(
+                    "Only requested or approved appointments can be cancelled");
+        }
+
+        if (!appointment.getStartTime()
+                .isAfter(LocalDateTime.now())) {
+            throw new BaseBadRequestException(
+                    "Started or past appointments cannot be cancelled");
+        }
+
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        return appointmentMapper.toResponse(savedAppointment);
     }
 
     @Transactional
