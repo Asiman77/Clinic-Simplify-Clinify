@@ -1,7 +1,8 @@
 package az.clinify.demo.controller;
 
-import az.clinify.demo.dto.request.AppointmentRequestDTO;
 import az.clinify.demo.dto.request.AppointmentStatusRequest;
+import az.clinify.demo.dto.request.PatientAppointmentRequestDTO;
+import az.clinify.demo.dto.request.WalkInAppointmentRequestDTO;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
 import az.clinify.demo.service.AppointmentBookingService;
 import az.clinify.demo.service.AppointmentManagementService;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,10 +39,29 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentManagementService.getAppointmentById(id));
     }
 
+    @PreAuthorize("hasRole('PATIENT')")
     @PostMapping
-    public ResponseEntity<AppointmentResponseDTO> createAppointment(
-            @Valid @RequestBody AppointmentRequestDTO request) {
-        AppointmentResponseDTO response = appointmentBookingService.createAppointment(request);
+    public ResponseEntity<AppointmentResponseDTO> createPatientAppointment(
+            @Valid @RequestBody PatientAppointmentRequestDTO request,
+            Authentication authentication) {
+
+        AppointmentResponseDTO response = appointmentBookingService
+                .createPatientAppointment(
+                        request,
+                        authentication.getName());
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PreAuthorize("hasRole('RECEPTION')")
+    @PostMapping("/walk-in")
+    public ResponseEntity<AppointmentResponseDTO> createWalkInAppointment(
+            @Valid @RequestBody WalkInAppointmentRequestDTO request,
+            Authentication authentication) {
+        AppointmentResponseDTO response = appointmentBookingService.createWalkInAppointment(request,
+                authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -53,9 +75,7 @@ public class AppointmentController {
     public ResponseEntity<Page<AppointmentResponseDTO>> getByPatient(
             @PathVariable Long patientId,
             @PageableDefault(page = 0, size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
-
-        return ResponseEntity.ok(
-                appointmentManagementService.getByPatient(patientId, pageable));
+        return ResponseEntity.ok(appointmentManagementService.getByPatient(patientId, pageable));
     }
 
     /**
