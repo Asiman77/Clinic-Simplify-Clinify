@@ -17,7 +17,6 @@ import az.clinify.demo.exceptions.BaseBadRequestException;
 import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.UserMapper;
 import az.clinify.demo.mockServer.MockData;
-import az.clinify.demo.mockServer.MockDataRepository;
 import az.clinify.demo.mockServer.MockDataService;
 import az.clinify.demo.repository.UserRepository;
 import az.clinify.demo.security.JwtTokenProvider;
