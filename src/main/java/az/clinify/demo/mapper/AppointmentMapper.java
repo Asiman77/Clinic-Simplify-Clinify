@@ -1,11 +1,11 @@
 package az.clinify.demo.mapper;
 
-import az.clinify.demo.dto.request.AppointmentRequestDTO;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
 import az.clinify.demo.entity.Appointment;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.AppointmentStatus;
+import az.clinify.demo.enums.AppointmentType;
 
 import java.time.LocalDateTime;
 
@@ -14,21 +14,25 @@ import org.springframework.stereotype.Component;
 @Component
 public class AppointmentMapper {
 
-    public Appointment toEntity(AppointmentRequestDTO request, User patient, DoctorProfile doctor, User createdBy,
-            LocalDateTime endTime) {
-        if (request == null) {
-            return null;
-        }
+    public Appointment toEntity(
+            User patient,
+            DoctorProfile doctor,
+            User createdBy,
+            AppointmentType type,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            String reason) {
 
         Appointment appointment = new Appointment();
         appointment.setPatient(patient);
         appointment.setDoctor(doctor);
         appointment.setCreatedBy(createdBy);
-        appointment.setType(request.getType());
+        appointment.setType(type);
         appointment.setStatus(AppointmentStatus.REQUESTED);
-        appointment.setStartTime(request.getStartTime());
+        appointment.setStartTime(startTime);
         appointment.setEndTime(endTime);
-        appointment.setReason(request.getReason());
+        appointment.setReason(reason);
+
         return appointment;
     }
 

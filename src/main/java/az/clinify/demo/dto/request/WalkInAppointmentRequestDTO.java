@@ -1,6 +1,7 @@
 package az.clinify.demo.dto.request;
 
-import az.clinify.demo.enums.AppointmentType;
+import java.time.LocalDateTime;
+
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,20 +10,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AppointmentRequestDTO {
-    @NotNull(message = "Doctor id is required")
-    private Long doctorId;
+public class WalkInAppointmentRequestDTO {
 
+    @NotNull(message = "Patient id is required")
     private Long patientId;
 
-    @NotNull(message = "Appointment type is required")
-    private AppointmentType type;
+    @NotNull(message = "Doctor id is required")
+    private Long doctorId;
 
     @NotNull(message = "Start time is required")
     @Future(message = "Appointment start time must be in the future")
