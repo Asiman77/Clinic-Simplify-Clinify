@@ -5,7 +5,6 @@ import az.clinify.demo.controller.MedicalrecordController;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.dto.response.DoctorPatientResponse;
-import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.service.DoctorMedicalRecordService;
 import az.clinify.demo.security.JwtTokenProvider;
