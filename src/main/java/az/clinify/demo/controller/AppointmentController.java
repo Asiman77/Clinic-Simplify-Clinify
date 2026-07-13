@@ -111,6 +111,7 @@ public class AppointmentController {
      * @param doctorId id of the doctor
      * @return list of appointments for the doctor
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTION')")
     @GetMapping("/doctor/{doctorId}")
     public ResponseEntity<Page<AppointmentResponseDTO>> getByDoctor(
             @PathVariable Long doctorId,
