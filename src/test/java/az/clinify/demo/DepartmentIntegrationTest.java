@@ -16,8 +16,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -69,6 +71,30 @@ class DepartmentIntegrationTest {
                     assertThat(saved.getName()).isEqualTo("Neurology");
                     assertThat(saved.getDescription()).isEqualTo("Brain and nervous system");
                 });
+    }
+
+    @Test
+    void updateThenDeleteDepartment_changesPersistedState() throws Exception {
+        Department department = saveDepartment("Neurology", "Old description", true);
+
+        mockMvc.perform(put("/api/departments/{id}", department.getId())
+                        .with(user("admin").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "name", "Neuroscience",
+                                "description", "Updated description",
+                                "active", true))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Neuroscience"))
+                .andExpect(jsonPath("$.description").value("Updated description"));
+
+        mockMvc.perform(delete("/api/departments/{id}", department.getId())
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isNoContent());
+
+        Department persisted = departmentRepository.findById(department.getId()).orElseThrow();
+        assertThat(persisted.getName()).isEqualTo("Neuroscience");
+        assertThat(persisted.getActive()).isFalse();
     }
 
     private Department saveDepartment(String name, String description, boolean active) {
