@@ -193,7 +193,8 @@ class LabResponseControllerTest {
 
                 when(labResponseService.updateLabResponse(
                                 eq(1L),
-                                any(UpdateLabResponseRequest.class)))
+                                any(UpdateLabResponseRequest.class),
+                                eq("lab-technician")))
                                 .thenReturn(response);
 
                 mockMvc.perform(put("/api/lab-responses/{id}", 1L)
@@ -207,7 +208,8 @@ class LabResponseControllerTest {
 
                 verify(labResponseService).updateLabResponse(
                                 eq(1L),
-                                any(UpdateLabResponseRequest.class));
+                                any(UpdateLabResponseRequest.class),
+                                eq("lab-technician"));
         }
 
         @Test
@@ -222,25 +224,23 @@ class LabResponseControllerTest {
 
                 when(labResponseService.updateLabResponseStatus(
                                 eq(1L),
-                                any(LabResponseStatusRequest.class)))
+                                any(LabResponseStatusRequest.class),
+                                eq("lab-technician")))
                                 .thenReturn(response);
 
-                mockMvc.perform(
-                                patch(
-                                                "/api/lab-responses/{id}/status",
-                                                1L)
-                                                .with(authentication(
-                                                                authenticationFor(
-                                                                                "lab-technician",
-                                                                                "LAB_TECHNICIAN")))
-                                                .with(csrf())
-                                                .contentType(MediaType.APPLICATION_JSON)
-                                                .content(objectMapper
-                                                                .writeValueAsString(request)))
+                mockMvc.perform(patch("/api/lab-responses/{id}/status", 1L)
+                                .with(authentication(authenticationFor(
+                                                "lab-technician",
+                                                "LAB_TECHNICIAN")))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper
+                                                .writeValueAsString(request)))
                                 .andExpect(status().isOk());
                 verify(labResponseService).updateLabResponseStatus(
                                 eq(1L),
-                                any(LabResponseStatusRequest.class));
+                                any(LabResponseStatusRequest.class),
+                                eq("lab-technician"));
         }
 
         @Test
@@ -256,7 +256,8 @@ class LabResponseControllerTest {
 
                 when(labResponseService.uploadLabResponseFile(
                                 eq(1L),
-                                any(MultipartFile.class)))
+                                any(MultipartFile.class),
+                                eq("lab-technician")))
                                 .thenReturn(response);
 
                 mockMvc.perform(multipart("/api/lab-responses/{id}/files", 1L)
@@ -266,7 +267,10 @@ class LabResponseControllerTest {
                                 .with(csrf()))
                                 .andExpect(status().isOk());
 
-                verify(labResponseService).uploadLabResponseFile(eq(1L), any(MultipartFile.class));
+                verify(labResponseService).uploadLabResponseFile(
+                                eq(1L),
+                                any(MultipartFile.class),
+                                eq("lab-technician"));
         }
 
         @Test
@@ -295,6 +299,7 @@ class LabResponseControllerTest {
 
                 verify(labResponseService, never()).updateLabResponse(
                                 eq(1L),
-                                any(UpdateLabResponseRequest.class));
+                                any(UpdateLabResponseRequest.class),
+                                eq("admin"));
         }
 }

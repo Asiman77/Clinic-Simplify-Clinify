@@ -8,7 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.AccessDeniedException;
 
+import az.clinify.demo.entity.User;
+import az.clinify.demo.exceptions.UserNotFoundException;
+import az.clinify.demo.repository.UserRepository;
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
 import az.clinify.demo.dto.response.LabResponseDetailDTO;
@@ -27,10 +31,11 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LabResponseService {
-
     private final LabResponseRepository labResponseRepository;
     private final LabResponseMapper labResponseMapper;
     private final CloudinaryUploadService cloudinaryUploadService;
+    private final UserRepository userRepository;
+
     private static final List<LabStatuses> OPEN_STATUSES = List.of(
             LabStatuses.PENDING,
             LabStatuses.IN_PROGRESS);
@@ -81,9 +86,11 @@ public class LabResponseService {
     }
 
     @Transactional
-    public LabResponseResponseDTO updateLabResponse(Long id, UpdateLabResponseRequest request) {
+    public LabResponseResponseDTO updateLabResponse(Long id, UpdateLabResponseRequest request,
+            String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
-
+        User technician = getCurrentLabTechnician(authenticatedFin);
+        assignOrValidateTechnician(labResponse, technician);
         if (request.getResultText() != null) {
             labResponse.setResultText(request.getResultText());
         }
@@ -95,34 +102,41 @@ public class LabResponseService {
             validateCompletedStatus(labResponse, request.getStatus());
             labResponse.setStatus(request.getStatus());
         }
-
-        return labResponseMapper.toResponse(labResponseRepository.save(labResponse));
+        LabResponse savedResponse = labResponseRepository.save(labResponse);
+        return labResponseMapper.toResponse(savedResponse);
     }
 
     @Transactional
-    public LabResponseResponseDTO updateLabResponseStatus(Long id, LabResponseStatusRequest request) {
+    public LabResponseResponseDTO updateLabResponseStatus(Long id, LabResponseStatusRequest request,
+            String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
-
+        User technician = getCurrentLabTechnician(authenticatedFin);
+        assignOrValidateTechnician(labResponse, technician);
         validateStatusUpdate(labResponse, request.getStatus());
         validateCompletedStatus(labResponse, request.getStatus());
-
         labResponse.setStatus(request.getStatus());
-
-        return labResponseMapper.toResponse(labResponseRepository.save(labResponse));
+        LabResponse savedResponse = labResponseRepository.save(labResponse);
+        return labResponseMapper.toResponse(savedResponse);
     }
 
     @Transactional
-    public LabResponseResponseDTO uploadLabResponseFile(Long id, MultipartFile file) {
+    public LabResponseResponseDTO uploadLabResponseFile(
+            Long id,
+            MultipartFile file,
+            String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
-        LabResponseFileMetadata fileMetadata = cloudinaryUploadService.uploadLabResponseFile(id, file);
+        User technician = getCurrentLabTechnician(authenticatedFin);
 
+        assignOrValidateTechnician(labResponse, technician);
+
+        LabResponseFileMetadata fileMetadata = cloudinaryUploadService
+                .uploadLabResponseFile(id, file);
         if (labResponse.getFiles() == null) {
             labResponse.setFiles(new ArrayList<>());
         }
-
         labResponse.getFiles().add(fileMetadata);
-
-        return labResponseMapper.toResponse(labResponseRepository.save(labResponse));
+        LabResponse savedResponse = labResponseRepository.save(labResponse);
+        return labResponseMapper.toResponse(savedResponse);
     }
 
     private LabResponse getLabResponseEntityById(Long id) {
@@ -151,6 +165,23 @@ public class LabResponseService {
 
         if (requestedStatus == LabStatuses.NOT_REQUIRED || requestedStatus == LabStatuses.REQUESTED) {
             throw new InvalidStatusException("Invalid lab response status: " + requestedStatus);
+        }
+    }
+
+    private User getCurrentLabTechnician(String authenticatedFin) {
+        return userRepository.findByFin(authenticatedFin).orElseThrow(() -> new UserNotFoundException("Lab technician could not be found"));
+    }
+
+    private void assignOrValidateTechnician(LabResponse labResponse, User technician) {
+        User assignedTechnician = labResponse.getLabTechnician();
+        if (assignedTechnician == null) {
+            labResponse.setLabTechnician(technician);
+            return;
+        }
+
+        if (!assignedTechnician.getId().equals(technician.getId())) {
+            throw new AccessDeniedException(
+                    "This lab response is assigned to another lab technician");
         }
     }
 }

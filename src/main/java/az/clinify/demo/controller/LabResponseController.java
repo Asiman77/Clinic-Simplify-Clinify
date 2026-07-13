@@ -1,5 +1,6 @@
 package az.clinify.demo.controller;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -66,25 +67,26 @@ public class LabResponseController {
         @PreAuthorize("hasRole('LAB_TECHNICIAN')")
         public ResponseEntity<LabResponseResponseDTO> updateLabResponse(
                         @PathVariable Long id,
-                        @Valid @RequestBody UpdateLabResponseRequest request) {
-                return ResponseEntity.ok(
-                                labResponseService.updateLabResponse(id, request));
+                        @Valid @RequestBody UpdateLabResponseRequest request, Principal principal) {
+                return ResponseEntity.ok(labResponseService.updateLabResponse(id, request, principal.getName()));
         }
 
         @PatchMapping("/{id}/status")
         @PreAuthorize("hasRole('LAB_TECHNICIAN')")
         public ResponseEntity<LabResponseResponseDTO> updateLabResponseStatus(
                         @PathVariable Long id,
-                        @Valid @RequestBody LabResponseStatusRequest request) {
-                return ResponseEntity.ok(
-                                labResponseService.updateLabResponseStatus(id, request));
+                        @Valid @RequestBody LabResponseStatusRequest request,
+                        Principal principal) {
+
+                return ResponseEntity.ok(labResponseService.updateLabResponseStatus(id, request, principal.getName()));
         }
 
         @PostMapping("/{id}/files")
         @PreAuthorize("hasRole('LAB_TECHNICIAN')")
         public ResponseEntity<LabResponseResponseDTO> uploadLabResponseFile(
                         @PathVariable Long id,
-                        @RequestParam("file") MultipartFile file) {
-                return ResponseEntity.ok(labResponseService.uploadLabResponseFile(id, file));
+                        @RequestParam("file") MultipartFile file,
+                        Principal principal) {
+                return ResponseEntity.ok(labResponseService.uploadLabResponseFile(id, file, principal.getName()));
         }
 }
