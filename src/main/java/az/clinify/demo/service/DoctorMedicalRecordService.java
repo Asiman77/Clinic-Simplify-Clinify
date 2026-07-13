@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import az.clinify.demo.dto.request.MedicalRecordRequestDTO;
+import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
 import az.clinify.demo.dto.response.DoctorPatientResponse;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.entity.DoctorProfile;
@@ -79,6 +80,27 @@ public class DoctorMedicalRecordService {
         return medicalRecordRepository
                 .findByDoctorId(doctor.getId(), pageable)
                 .map(medicalRecordMapper::toResponse);
+    }
+
+    @Transactional
+    public MedicalRecordResponseDTO update(Long recordId, UpdateMedicalRecordRequest request, String authenticatedFin) {
+        DoctorProfile doctor = getCurrentDoctor(authenticatedFin);
+        MedicalRecord record = medicalRecordRepository
+                .findByIdAndDoctorId(recordId, doctor.getId())
+                .orElseThrow(() -> new MedicalRecordNotFoundException(
+                        "Medical record could not be found"));
+        if (request.getDiagnosis() != null && !request.getDiagnosis().isBlank()) {
+            record.setDiagnosis(
+                    request.getDiagnosis().trim());
+        }
+        if (request.getSymptoms() != null) {
+            record.setSymptoms(request.getSymptoms());
+        }
+        if (request.getReceipt() != null) {
+            record.setReceipt(request.getReceipt());
+        }
+        MedicalRecord savedRecord = medicalRecordRepository.save(record);
+        return medicalRecordMapper.toResponse(savedRecord);
     }
 
     @Transactional(readOnly = true)
