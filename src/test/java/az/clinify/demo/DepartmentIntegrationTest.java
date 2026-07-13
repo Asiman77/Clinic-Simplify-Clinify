@@ -97,6 +97,40 @@ class DepartmentIntegrationTest {
         assertThat(persisted.getActive()).isFalse();
     }
 
+    @Test
+    void getDepartment_returnsNotFound_forUnknownId() throws Exception {
+        mockMvc.perform(get("/api/departments/{id}", 999_999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not found"));
+    }
+
+    @Test
+    void createDepartment_rejectsInvalidPayload_beforePersistence() throws Exception {
+        mockMvc.perform(post("/api/departments")
+                        .with(user("admin").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "name", "   ",
+                                "description", "Invalid department"))))
+                .andExpect(status().isBadRequest());
+
+        assertThat(departmentRepository.count()).isZero();
+    }
+
+    @Test
+    void createDepartment_returnsForbidden_forNonAdmin_andDoesNotPersist() throws Exception {
+        mockMvc.perform(post("/api/departments")
+                        .with(user("patient").roles("PATIENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "name", "Oncology",
+                                "description", "Cancer care"))))
+                .andExpect(status().isForbidden());
+
+        assertThat(departmentRepository.count()).isZero();
+    }
+
     private Department saveDepartment(String name, String description, boolean active) {
         Department department = new Department();
         department.setName(name);
