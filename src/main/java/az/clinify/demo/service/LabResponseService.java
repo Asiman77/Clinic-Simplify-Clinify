@@ -3,13 +3,17 @@ package az.clinify.demo.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
+import az.clinify.demo.dto.response.LabResponseDetailDTO;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
+import az.clinify.demo.dto.response.LabResponseSummaryDTO;
 import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.exceptions.BaseBadRequestException;
@@ -27,6 +31,33 @@ public class LabResponseService {
     private final LabResponseRepository labResponseRepository;
     private final LabResponseMapper labResponseMapper;
     private final CloudinaryUploadService cloudinaryUploadService;
+    private static final List<LabStatuses> OPEN_STATUSES = List.of(
+            LabStatuses.PENDING,
+            LabStatuses.IN_PROGRESS);
+
+    @Transactional(readOnly = true)
+    public Page<LabResponseSummaryDTO> getAllLabResponses(
+            Pageable pageable) {
+
+        return labResponseRepository
+                .findAll(pageable)
+                .map(labResponseMapper::toSummary);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<LabResponseSummaryDTO> getOpenLabResponses(
+            Pageable pageable) {
+
+        return labResponseRepository
+                .findAllByStatusIn(OPEN_STATUSES, pageable)
+                .map(labResponseMapper::toSummary);
+    }
+
+    @Transactional(readOnly = true)
+    public LabResponseDetailDTO getLabResponseDetail(Long id) {
+        LabResponse labResponse = getLabResponseEntityById(id);
+        return labResponseMapper.toDetail(labResponse);
+    }
 
     @Transactional(readOnly = true)
     public LabResponseResponseDTO getLabResponseById(Long id) {
