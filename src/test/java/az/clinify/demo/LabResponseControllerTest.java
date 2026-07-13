@@ -21,8 +21,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,17 +33,20 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(LabResponseController.class)
-@Import({
-                SecurityConfig.class
-})
+@Import(SecurityConfig.class)
 class LabResponseControllerTest {
 
         @Autowired
@@ -73,8 +77,15 @@ class LabResponseControllerTest {
                                 LocalDateTime.now());
         }
 
+        private UsernamePasswordAuthenticationToken authenticationFor(String username, String role) {
+                return new UsernamePasswordAuthenticationToken(
+                                username,
+                                null,
+                                List.of(new SimpleGrantedAuthority(
+                                                "ROLE_" + role)));
+        }
+
         @Test
-        @WithMockUser
         void getLabResponseById_ShouldReturnOk() throws Exception {
                 LabResponseDetailDTO response = new LabResponseDetailDTO();
 
@@ -85,7 +96,11 @@ class LabResponseControllerTest {
                 when(labResponseService.getLabResponseDetail(1L))
                                 .thenReturn(response);
 
-                mockMvc.perform(get("/api/lab-responses/{id}", 1L))
+                mockMvc.perform(get("/api/lab-responses/{id}", 1L)
+                                .with(authentication(
+                                                authenticationFor(
+                                                                "lab-technician",
+                                                                "LAB_TECHNICIAN"))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.id").value(1))
                                 .andExpect(jsonPath("$.testName")
@@ -96,7 +111,6 @@ class LabResponseControllerTest {
         }
 
         @Test
-        @WithMockUser
         void getAllLabResponses_ShouldReturnOk() throws Exception {
                 Page<LabResponseSummaryDTO> page = new PageImpl<>(
                                 List.of(sampleSummary()),
@@ -108,10 +122,15 @@ class LabResponseControllerTest {
                                 .thenReturn(page);
 
                 mockMvc.perform(get("/api/lab-responses")
+                                .with(authentication(
+                                                authenticationFor(
+                                                                "admin",
+                                                                "ADMIN")))
                                 .param("page", "0")
                                 .param("size", "10"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content[0].id").value(1))
+                                .andExpect(jsonPath("$.content[0].id")
+                                                .value(1))
                                 .andExpect(jsonPath("$.content[0].testName")
                                                 .value("Blood Test"));
 
@@ -120,19 +139,27 @@ class LabResponseControllerTest {
         }
 
         @Test
-        @WithMockUser
-        void getLabResponsesByMedicalRecordId_ShouldReturnOk() throws Exception {
-                LabResponseResponseDTO response = new LabResponseResponseDTO();
-                when(labResponseService.getLabResponsesByMedicalRecordId(100L)).thenReturn(List.of(response));
+        void getLabResponsesByMedicalRecordId_ShouldReturnOk()
+                        throws Exception {
 
-                mockMvc.perform(get("/api/lab-responses/medical-record/{medicalRecordId}", 100L))
+                LabResponseResponseDTO response = new LabResponseResponseDTO();
+
+                when(labResponseService
+                                .getLabResponsesByMedicalRecordId(100L))
+                                .thenReturn(List.of(response));
+
+                mockMvc.perform(get("/api/lab-responses/medical-record/{medicalRecordId}",
+                                100L)
+                                .with(authentication(authenticationFor(
+                                                "lab-technician",
+                                                "LAB_TECHNICIAN"))))
                                 .andExpect(status().isOk());
 
-                verify(labResponseService).getLabResponsesByMedicalRecordId(100L);
+                verify(labResponseService)
+                                .getLabResponsesByMedicalRecordId(100L);
         }
 
         @Test
-        @WithMockUser
         void getOpenLabResponses_ShouldReturnOk() throws Exception {
                 Page<LabResponseSummaryDTO> page = new PageImpl<>(
                                 List.of(sampleSummary()),
@@ -144,6 +171,10 @@ class LabResponseControllerTest {
                                 .thenReturn(page);
 
                 mockMvc.perform(get("/api/lab-responses/pending")
+                                .with(authentication(
+                                                authenticationFor(
+                                                                "lab-technician",
+                                                                "LAB_TECHNICIAN")))
                                 .param("page", "0")
                                 .param("size", "10"))
                                 .andExpect(status().isOk())
@@ -155,63 +186,115 @@ class LabResponseControllerTest {
         }
 
         @Test
-        @WithMockUser
         void updateLabResponse_ShouldReturnOk() throws Exception {
-                UpdateLabResponseRequest request = new UpdateLabResponseRequest(); // request daxilində @Valid üçün
-                                                                                   // lazımi sahələri doldur
+                UpdateLabResponseRequest request = new UpdateLabResponseRequest();
+
                 LabResponseResponseDTO response = new LabResponseResponseDTO();
 
-                when(labResponseService.updateLabResponse(eq(1L), any(UpdateLabResponseRequest.class)))
+                when(labResponseService.updateLabResponse(
+                                eq(1L),
+                                any(UpdateLabResponseRequest.class)))
                                 .thenReturn(response);
 
                 mockMvc.perform(put("/api/lab-responses/{id}", 1L)
+                                .with(authentication(authenticationFor(
+                                                "lab-technician",
+                                                "LAB_TECHNICIAN")))
                                 .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk());
 
-                verify(labResponseService).updateLabResponse(eq(1L), any(UpdateLabResponseRequest.class));
+                verify(labResponseService).updateLabResponse(
+                                eq(1L),
+                                any(UpdateLabResponseRequest.class));
         }
 
         @Test
-        @WithMockUser
-        void updateLabResponseStatus_ShouldReturnOk() throws Exception {
+        void updateLabResponseStatus_ShouldReturnOk()
+                        throws Exception {
+
                 LabResponseStatusRequest request = new LabResponseStatusRequest();
-                request.setStatus(az.clinify.demo.enums.LabStatuses.COMPLETED); // Səndə hansı enum-lar varsa birini yaz
-                                                                                // (örn: PENDING, APPROVED və s.)
+
+                request.setStatus(LabStatuses.COMPLETED);
 
                 LabResponseResponseDTO response = new LabResponseResponseDTO();
 
-                when(labResponseService.updateLabResponseStatus(eq(1L), any(LabResponseStatusRequest.class)))
+                when(labResponseService.updateLabResponseStatus(
+                                eq(1L),
+                                any(LabResponseStatusRequest.class)))
                                 .thenReturn(response);
 
-                mockMvc.perform(patch("/api/lab-responses/{id}/status", 1L)
-                                .with(csrf())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                mockMvc.perform(
+                                patch(
+                                                "/api/lab-responses/{id}/status",
+                                                1L)
+                                                .with(authentication(
+                                                                authenticationFor(
+                                                                                "lab-technician",
+                                                                                "LAB_TECHNICIAN")))
+                                                .with(csrf())
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper
+                                                                .writeValueAsString(request)))
                                 .andExpect(status().isOk());
-
-                verify(labResponseService).updateLabResponseStatus(eq(1L), any(LabResponseStatusRequest.class));
+                verify(labResponseService).updateLabResponseStatus(
+                                eq(1L),
+                                any(LabResponseStatusRequest.class));
         }
 
         @Test
-        @WithMockUser
-        void uploadLabResponseFile_ShouldReturnOk() throws Exception {
+        void uploadLabResponseFile_ShouldReturnOk()
+                        throws Exception {
                 MockMultipartFile file = new MockMultipartFile(
                                 "file",
                                 "test.pdf",
                                 MediaType.APPLICATION_PDF_VALUE,
                                 "test data".getBytes());
+
                 LabResponseResponseDTO response = new LabResponseResponseDTO();
 
-                when(labResponseService.uploadLabResponseFile(eq(1L), any(MultipartFile.class))).thenReturn(response);
+                when(labResponseService.uploadLabResponseFile(
+                                eq(1L),
+                                any(MultipartFile.class)))
+                                .thenReturn(response);
 
                 mockMvc.perform(multipart("/api/lab-responses/{id}/files", 1L)
                                 .file(file)
+                                .with(authentication(
+                                                authenticationFor("lab-technician", "LAB_TECHNICIAN")))
                                 .with(csrf()))
                                 .andExpect(status().isOk());
 
                 verify(labResponseService).uploadLabResponseFile(eq(1L), any(MultipartFile.class));
         }
 
+        @Test
+        void getLabResponseById_ShouldReturnForbidden_WhenDoctor()
+                        throws Exception {
+
+                mockMvc.perform(get("/api/lab-responses/{id}", 1L)
+                                .with(authentication(authenticationFor(
+                                                "doctor",
+                                                "DOCTOR"))))
+                                .andExpect(status().isForbidden());
+                verify(labResponseService, never()).getLabResponseDetail(1L);
+        }
+
+        @Test
+        void updateLabResponse_ShouldReturnForbidden_WhenAdmin()
+                        throws Exception {
+                UpdateLabResponseRequest request = new UpdateLabResponseRequest();
+                mockMvc.perform(put("/api/lab-responses/{id}", 1L)
+                                .with(authentication(authenticationFor("admin", "ADMIN")))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper
+                                                .writeValueAsString(request)))
+                                .andExpect(status().isForbidden());
+
+                verify(labResponseService, never()).updateLabResponse(
+                                eq(1L),
+                                any(UpdateLabResponseRequest.class));
+        }
 }

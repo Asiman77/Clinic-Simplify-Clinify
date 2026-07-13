@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,17 +35,20 @@ public class LabResponseController {
         private final LabResponseService labResponseService;
 
         @GetMapping
+        @PreAuthorize("hasAnyRole('ADMIN', 'LAB_TECHNICIAN')")
         public ResponseEntity<Page<LabResponseSummaryDTO>> getAllLabResponses(
                         @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
                 return ResponseEntity.ok(labResponseService.getAllLabResponses(pageable));
         }
 
         @GetMapping("/{id}")
+        @PreAuthorize("hasAnyRole('ADMIN', 'LAB_TECHNICIAN')")
         public ResponseEntity<LabResponseDetailDTO> getLabResponseById(@PathVariable Long id) {
                 return ResponseEntity.ok(labResponseService.getLabResponseDetail(id));
         }
 
         @GetMapping("/medical-record/{medicalRecordId}")
+        @PreAuthorize("hasAnyRole('ADMIN', 'LAB_TECHNICIAN')")
         public ResponseEntity<List<LabResponseResponseDTO>> getLabResponsesByMedicalRecordId(
                         @PathVariable Long medicalRecordId) {
                 return ResponseEntity.ok(
@@ -52,12 +56,14 @@ public class LabResponseController {
         }
 
         @GetMapping("/pending")
+        @PreAuthorize("hasAnyRole('ADMIN', 'LAB_TECHNICIAN')")
         public ResponseEntity<Page<LabResponseSummaryDTO>> getOpenLabResponses(
                         @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
                 return ResponseEntity.ok(labResponseService.getOpenLabResponses(pageable));
         }
 
         @PutMapping("/{id}")
+        @PreAuthorize("hasRole('LAB_TECHNICIAN')")
         public ResponseEntity<LabResponseResponseDTO> updateLabResponse(
                         @PathVariable Long id,
                         @Valid @RequestBody UpdateLabResponseRequest request) {
@@ -66,6 +72,7 @@ public class LabResponseController {
         }
 
         @PatchMapping("/{id}/status")
+        @PreAuthorize("hasRole('LAB_TECHNICIAN')")
         public ResponseEntity<LabResponseResponseDTO> updateLabResponseStatus(
                         @PathVariable Long id,
                         @Valid @RequestBody LabResponseStatusRequest request) {
@@ -74,6 +81,7 @@ public class LabResponseController {
         }
 
         @PostMapping("/{id}/files")
+        @PreAuthorize("hasRole('LAB_TECHNICIAN')")
         public ResponseEntity<LabResponseResponseDTO> uploadLabResponseFile(
                         @PathVariable Long id,
                         @RequestParam("file") MultipartFile file) {
