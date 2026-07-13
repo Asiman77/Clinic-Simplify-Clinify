@@ -21,6 +21,21 @@ The backend is built with **Spring Boot** and follows a layered architecture wit
 
 ---
 
+# Technologies Used
+
+The backend is developed using the Spring ecosystem, providing a secure and scalable REST API.
+
+| Technology | Purpose |
+|------------|---------|
+| Spring Boot | Framework for building RESTful backend services. |
+| Spring Security | Handles authentication and authorization. |
+| MySQL | Relational database used for persistent data storage. |
+| Docker | Containerizes the application for consistent environments. |
+| GitHub Actions | Automates continuous integration and deployment workflows. |
+| Render | Hosts and deploys the application in the cloud. |
+
+---
+
 # Documentation Guide
 
 The following documents provide detailed information about the project.
