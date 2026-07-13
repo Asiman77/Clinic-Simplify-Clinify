@@ -74,6 +74,23 @@ class DepartmentIntegrationTest {
     }
 
     @Test
+    void createDepartment_returnsConflict_forCaseInsensitiveDuplicate() throws Exception {
+        saveDepartment("Cardiology", "Existing department", true);
+
+        mockMvc.perform(post("/api/departments")
+                        .with(user("admin").roles("ADMIN"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "name", "cardiology",
+                                "description", "Duplicate"))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"));
+
+        assertThat(departmentRepository.count()).isEqualTo(1);
+    }
+
+    @Test
     void updateThenDeleteDepartment_changesPersistedState() throws Exception {
         Department department = saveDepartment("Neurology", "Old description", true);
 

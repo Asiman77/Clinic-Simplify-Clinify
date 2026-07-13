@@ -1,6 +1,6 @@
 package az.clinify.demo.exceptions;
 
-public class DepartmentAlreadyExistsException extends RuntimeException {
+public class DepartmentAlreadyExistsException extends BaseConflictException {
 
     //This Exception will use when you create duplicate department with existed name
 
