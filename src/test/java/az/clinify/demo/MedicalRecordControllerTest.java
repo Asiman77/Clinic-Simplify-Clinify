@@ -4,6 +4,7 @@ import az.clinify.demo.configs.SecurityConfig;
 import az.clinify.demo.controller.MedicalrecordController;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
+import az.clinify.demo.dto.response.DoctorPatientResponse;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.service.DoctorMedicalRecordService;
@@ -109,6 +110,13 @@ class MedicalRecordControllerTest {
                 record.setCreatedAt(LocalDateTime.now());
                 record.setUpdatedAt(LocalDateTime.now());
                 return record;
+        }
+
+        private UsernamePasswordAuthenticationToken doctorAuthentication() {
+                return new UsernamePasswordAuthenticationToken(
+                                "doctor",
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR")));
         }
 
         @Test
@@ -278,5 +286,65 @@ class MedicalRecordControllerTest {
                                 .andExpect(status().isForbidden());
 
                 verify(medicalRecordService, never()).updateMedicalRecord(any(), any(), anyString());
+        }
+
+        @Test
+        void getCurrentDoctorRecords_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                Page<MedicalRecordResponseDTO> page = new PageImpl<>(
+                                List.of(sampleResponse()),
+                                PageRequest.of(0, 10),
+                                1);
+
+                when(doctorMedicalRecordService.getCurrentDoctorRecords(
+                                eq("doctor"), any(Pageable.class)))
+                                .thenReturn(page);
+
+                mockMvc.perform(get("/api/records/doctor/mine")
+                                .with(authentication(doctorAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.totalElements").value(1))
+                                .andExpect(jsonPath("$.content[0].id").value(1));
+
+                verify(doctorMedicalRecordService)
+                                .getCurrentDoctorRecords(
+                                                eq("doctor"), any(Pageable.class));
+        }
+
+        @Test
+        void getCurrentDoctorRecord_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                when(doctorMedicalRecordService
+                                .getCurrentDoctorRecord(1L, "doctor"))
+                                .thenReturn(sampleResponse());
+
+                mockMvc.perform(get("/api/records/doctor/mine/{id}", 1L)
+                                .with(authentication(doctorAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1));
+
+                verify(doctorMedicalRecordService)
+                                .getCurrentDoctorRecord(1L, "doctor");
+        }
+
+        @Test
+        void getCurrentDoctorPatients_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                when(doctorMedicalRecordService.getCurrentDoctorPatients("doctor"))
+                                .thenReturn(List.of(
+                                                new DoctorPatientResponse(
+                                                                10L, "Ali", "Aliyev", "ali@example.com")));
+
+                mockMvc.perform(get("/api/records/doctor/patients")
+                                .with(authentication(doctorAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].id").value(10))
+                                .andExpect(jsonPath("$[0].firstName").value("Ali"));
+
+                verify(doctorMedicalRecordService)
+                                .getCurrentDoctorPatients("doctor");
         }
 }
