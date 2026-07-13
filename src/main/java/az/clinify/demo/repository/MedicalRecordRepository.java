@@ -3,6 +3,7 @@ package az.clinify.demo.repository;
 import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
 import az.clinify.demo.entity.MedicalRecord;
 
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Long> {
+    Page<MedicalRecord> findByDoctorId(
+            Long doctorId,
+            Pageable pageable);
+
+    Optional<MedicalRecord> findByIdAndDoctorId(
+            Long recordId,
+            Long doctorId);
+
     @Query("""
                 SELECT new az.clinify.demo.dto.response.MedicalRecordSummaryDto(
                     m.id,
