@@ -66,21 +66,8 @@ public class LabResponseService {
     }
 
     @Transactional(readOnly = true)
-    public LabResponseResponseDTO getLabResponseById(Long id) {
-        return labResponseMapper.toResponse(getLabResponseEntityById(id));
-    }
-
-    @Transactional(readOnly = true)
     public List<LabResponseResponseDTO> getLabResponsesByMedicalRecordId(Long medicalRecordId) {
         return labResponseRepository.findAllByMedicalRecordId(medicalRecordId)
-                .stream()
-                .map(labResponseMapper::toResponse)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<LabResponseResponseDTO> getPendingLabResponses() {
-        return labResponseRepository.findAllByStatus(LabStatuses.PENDING)
                 .stream()
                 .map(labResponseMapper::toResponse)
                 .toList();

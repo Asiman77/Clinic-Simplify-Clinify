@@ -50,6 +50,4 @@ public interface LabResponseRepository extends JpaRepository<LabResponse, Long> 
     List<LabResponse> findAllByMedicalRecordId(
             Long medicalRecordId);
 
-    List<LabResponse> findAllByStatus(
-            LabStatuses status);
 }
