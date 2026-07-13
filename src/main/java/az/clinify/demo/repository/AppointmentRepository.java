@@ -1,6 +1,7 @@
 package az.clinify.demo.repository;
 
 import az.clinify.demo.entity.Appointment;
+import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.AppointmentStatus;
 
 import java.time.LocalDateTime;
@@ -28,6 +29,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                         Long appointmentId,
                         Long doctorId);
 
+        boolean existsByDoctorIdAndPatientIdAndStatusIn(
+                        Long doctorId,
+                        Long patientId,
+                        List<AppointmentStatus> statuses);
+
         @Query("""
                         SELECT COUNT(a) > 0
                         FROM Appointment a
@@ -45,4 +51,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         Page<Appointment> findByPatientId(Long patientId, Pageable pageable);
 
         Page<Appointment> findByDoctorId(Long doctorId, Pageable pageable);
+
+        @Query("""
+                        SELECT DISTINCT a.patient
+                        FROM Appointment a
+                        WHERE a.doctor.id = :doctorId
+                          AND a.status IN :statuses
+                        ORDER BY a.patient.firstName, a.patient.lastName
+                        """)
+        List<User> findDistinctPatientsByDoctorIdAndStatusIn(
+                        @Param("doctorId") Long doctorId,
+                        @Param("statuses") List<AppointmentStatus> statuses);
 }

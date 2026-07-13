@@ -4,8 +4,10 @@ import az.clinify.demo.configs.SecurityConfig;
 import az.clinify.demo.controller.MedicalrecordController;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
+import az.clinify.demo.dto.response.DoctorPatientResponse;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.enums.LabStatuses;
+import az.clinify.demo.service.DoctorMedicalRecordService;
 import az.clinify.demo.security.JwtTokenProvider;
 import az.clinify.demo.service.MedicalRecordService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,253 +51,285 @@ import java.util.List;
 @Import(SecurityConfig.class)
 class MedicalRecordControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper =
-            new ObjectMapper().registerModule(new JavaTimeModule());
+        private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
-    @MockitoBean
-    private MedicalRecordService medicalRecordService;
+        @MockitoBean
+        private MedicalRecordService medicalRecordService;
 
-    @MockitoBean
-    private JwtTokenProvider jwtTokenProvider;
+        @MockitoBean
+        private JwtTokenProvider jwtTokenProvider;
 
-    @MockitoBean
-    private UserDetailsService userDetailsService;
+        @MockitoBean
+        private DoctorMedicalRecordService doctorMedicalRecordService;
 
-    private MedicalRecordResponseDTO sampleResponse() {
-        MedicalRecordResponseDTO dto = new MedicalRecordResponseDTO();
-        dto.setId(1L);
-        dto.setPatientId(10L);
-        dto.setPatientFullName("Ali Aliyev");
-        dto.setDoctorId(20L);
-        dto.setDoctorFullName("Dr. Vusal");
-        dto.setDiagnosis("Flu");
-        dto.setSymptoms("Fever");
-        dto.setReceipt("Medicine");
-        dto.setRecordDate(LocalDateTime.now());
-        dto.setCreatedAt(LocalDateTime.now());
-        dto.setUpdatedAt(LocalDateTime.now());
+        @MockitoBean
+        private UserDetailsService userDetailsService;
 
+        private MedicalRecordResponseDTO sampleResponse() {
+                MedicalRecordResponseDTO dto = new MedicalRecordResponseDTO();
+                dto.setId(1L);
+                dto.setPatientId(10L);
+                dto.setPatientFullName("Ali Aliyev");
+                dto.setDoctorId(20L);
+                dto.setDoctorFullName("Dr. Vusal");
+                dto.setDiagnosis("Flu");
+                dto.setSymptoms("Fever");
+                dto.setReceipt("Medicine");
+                dto.setRecordDate(LocalDateTime.now());
+                dto.setCreatedAt(LocalDateTime.now());
+                dto.setUpdatedAt(LocalDateTime.now());
 
-        LabResponseResponseDTO labResponse = new LabResponseResponseDTO(
-                1L,               // id
-                1L,               // medicalRecordId
-                30L,              // labTechnicianId
-                "Lab User",       // labTechnicianFullName
-                "Blood Test",     // testName
-                LabStatuses.PENDING, // status
-                "Negative",       // resultText
-                "Everything normal", // note
-                new ArrayList<>(), // files (metadata list)
-                LocalDateTime.now(), // createdAt
-                LocalDateTime.now()  // updatedAt
-        );
-
-        dto.setLabResponses(List.of(labResponse));
-        return dto;
-    }
-
-    private MedicalRecord sampleMedicalRecord() {
-        MedicalRecord record = new MedicalRecord();
-        record.setId(1L);
-        record.setDiagnosis("Updated Diagnosis");
-        record.setSymptoms("Updated Symptoms");
-        record.setReceipt("Updated Receipt");
-        record.setRecordDate(LocalDateTime.now());
-        record.setCreatedAt(LocalDateTime.now());
-        record.setUpdatedAt(LocalDateTime.now());
-        return record;
-    }
-
-    @Test
-    void createMedicalRecord_ShouldReturnCreated() throws Exception {
-
-        MedicalRecordRequestDTO request =
-                new MedicalRecordRequestDTO(
-                        10L,
-                        "Flu",
-                        "Fever",
-                        "Medicine",
-                        new ArrayList<>() // labTests siyahısı
+                LabResponseResponseDTO labResponse = new LabResponseResponseDTO(
+                                1L, // id
+                                1L, // medicalRecordId
+                                30L, // labTechnicianId
+                                "Lab User", // labTechnicianFullName
+                                "Blood Test", // testName
+                                LabStatuses.PENDING, // status
+                                "Negative", // resultText
+                                "Everything normal", // note
+                                new ArrayList<>(), // files (metadata list)
+                                LocalDateTime.now(), // createdAt
+                                LocalDateTime.now() // updatedAt
                 );
 
-        when(medicalRecordService.CreateMedicalRecord(any()))
-                .thenReturn(sampleResponse());
+                dto.setLabResponses(List.of(labResponse));
+                return dto;
+        }
 
-        mockMvc.perform(
-                        post("/api/records")
-                                .with(authentication(
-                                        new UsernamePasswordAuthenticationToken(
-                                                "doctor",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
-                                        )
-                                ))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.diagnosis").value("Flu"));
+        private UsernamePasswordAuthenticationToken doctorAuthentication() {
+                return new UsernamePasswordAuthenticationToken(
+                                "doctor",
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR")));
+        }
 
-        verify(medicalRecordService).CreateMedicalRecord(any());
-    }
+        @Test
+        void createMedicalRecord_ShouldReturnCreated() throws Exception {
 
-    @Test
-    void createMedicalRecord_ShouldReturnForbidden_WhenPatient() throws Exception {
-        MedicalRecordRequestDTO request =
-                new MedicalRecordRequestDTO(
-                        10L,
-                        "Flu",
-                        "Fever",
-                        "Medicine",
-                        new ArrayList<>()
+                MedicalRecordRequestDTO request = new MedicalRecordRequestDTO(
+                                10L,
+                                "Flu",
+                                "Fever",
+                                "Medicine",
+                                new ArrayList<>() // labTests siyahısı
                 );
 
-        mockMvc.perform(
-                        post("/api/records")
-                                .with(authentication(
-                                        new UsernamePasswordAuthenticationToken(
-                                                "patient",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
-                                        )
-                                ))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isForbidden());
+                when(doctorMedicalRecordService.create(
+                                any(MedicalRecordRequestDTO.class),
+                                eq("doctor")))
+                                .thenReturn(sampleResponse());
 
-        verify(medicalRecordService, never()).CreateMedicalRecord(any());
-    }
+                mockMvc.perform(
+                                post("/api/records")
+                                                .with(authentication(
+                                                                new UsernamePasswordAuthenticationToken(
+                                                                                "doctor",
+                                                                                null,
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_DOCTOR")))))
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.diagnosis").value("Flu"));
 
-    @Test
-    void getMedicalRecord_ShouldReturnOk() throws Exception {
-        when(medicalRecordService.returnMedicalRecord(1L))
-                .thenReturn(sampleResponse());
+                verify(doctorMedicalRecordService).create(
+                                any(MedicalRecordRequestDTO.class),
+                                eq("doctor"));
+        }
 
-        mockMvc.perform(
-                        get("/api/records/{id}", 1L)
-                                .with(authentication(
-                                        new UsernamePasswordAuthenticationToken(
-                                                "doctor",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
-                                        )
-                                ))
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.diagnosis").value("Flu"));
+        @Test
+        void createMedicalRecord_ShouldReturnForbidden_WhenPatient() throws Exception {
+                MedicalRecordRequestDTO request = new MedicalRecordRequestDTO(
+                                10L,
+                                "Flu",
+                                "Fever",
+                                "Medicine",
+                                new ArrayList<>());
 
-        verify(medicalRecordService).returnMedicalRecord(1L);
-    }
+                mockMvc.perform(
+                                post("/api/records")
+                                                .with(authentication(
+                                                                new UsernamePasswordAuthenticationToken(
+                                                                                "patient",
+                                                                                null,
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_PATIENT")))))
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isForbidden());
 
-@Test
-void getPatientRecords_ShouldReturnOk_WhenDoctor() throws Exception {
+                verify(doctorMedicalRecordService, never())
+                                .create(any(MedicalRecordRequestDTO.class), anyString());
+        }
 
-    MedicalRecordSummaryDto summary =
-            new MedicalRecordSummaryDto(
-                    1L,
-                    "Flu",
-                    LocalDateTime.now()
-            );
+        @Test
+        void getMedicalRecord_ShouldReturnOk_WhenAdmin() throws Exception {
+                when(medicalRecordService.returnMedicalRecord(1L))
+                                .thenReturn(sampleResponse());
 
-    Page<MedicalRecordSummaryDto> page = new PageImpl<>(
-            List.of(summary),
-            PageRequest.of(0, 10),
-            1
-    );
+                mockMvc.perform(
+                                get("/api/records/{id}", 1L)
+                                                .with(authentication(
+                                                                new UsernamePasswordAuthenticationToken("admin", null,
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_ADMIN"))))))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.diagnosis").value("Flu"));
 
-    when(medicalRecordService.getPatientMedicalRecords(eq(10L), any(Pageable.class)))
-            .thenReturn(page);
+                verify(medicalRecordService).returnMedicalRecord(1L);
+        }
 
-    mockMvc.perform(
-                    get("/api/records/patient/{patientId}", 10L)
-                            .param("page", "0")
-                            .param("size", "10")
-                            .with(authentication(
-                                    new UsernamePasswordAuthenticationToken(
-                                            "doctor",
-                                            null,
-                                            List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
-                                    )
-                            ))
-            )
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].id").value(1))
-            .andExpect(jsonPath("$.content[0].diagnosis").value("Flu"))
-            .andExpect(jsonPath("$.totalElements").value(1));
+        @Test
+        void getPatientRecords_ShouldReturnOk_WhenAdmin() throws Exception {
 
-    verify(medicalRecordService)
-            .getPatientMedicalRecords(eq(10L), any(Pageable.class));
-}
+                MedicalRecordSummaryDto summary = new MedicalRecordSummaryDto(
+                                1L,
+                                "Flu",
+                                LocalDateTime.now());
 
-    @Test
-    void updateRecord_ShouldReturnOk_WhenDoctor() throws Exception {
+                Page<MedicalRecordSummaryDto> page = new PageImpl<>(
+                                List.of(summary),
+                                PageRequest.of(0, 10),
+                                1);
 
-        UpdateMedicalRecordRequest request =
-                new UpdateMedicalRecordRequest(
-                        "Updated Diagnosis",
-                        "Updated Symptoms",
-                        "Updated Receipt"
-                );
+                when(medicalRecordService.getPatientMedicalRecords(eq(10L), any(Pageable.class)))
+                                .thenReturn(page);
 
-        when(medicalRecordService.updateMedicalRecord(
-                eq(1L),
-                any(UpdateMedicalRecordRequest.class),
-                anyString()
-        )).thenReturn(sampleMedicalRecord());
+                mockMvc.perform(
+                                get("/api/records/patient/{patientId}", 10L)
+                                                .param("page", "0")
+                                                .param("size", "10")
+                                                .with(authentication(
+                                                                new UsernamePasswordAuthenticationToken(
+                                                                                "admin",
+                                                                                null,
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_ADMIN"))))))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content[0].id").value(1))
+                                .andExpect(jsonPath("$.content[0].diagnosis").value("Flu"))
+                                .andExpect(jsonPath("$.totalElements").value(1));
 
-        mockMvc.perform(
-                        put("/api/records/{id}", 1L)
-                                .with(authentication(
-                                        new UsernamePasswordAuthenticationToken(
-                                                "doctor",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
-                                        )
-                                ))
-                                .principal(() -> "doctor")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isOk());
+                verify(medicalRecordService)
+                                .getPatientMedicalRecords(eq(10L), any(Pageable.class));
+        }
 
-        verify(medicalRecordService)
-                .updateMedicalRecord(
-                        eq(1L),
-                        any(UpdateMedicalRecordRequest.class),
-                        eq("doctor")
-                );
-    }
+        @Test
+        void updateRecord_ShouldReturnOk_WhenDoctor() throws Exception {
+                UpdateMedicalRecordRequest request = new UpdateMedicalRecordRequest(
+                                "Updated Diagnosis",
+                                "Updated Symptoms",
+                                "Updated Receipt");
 
-    @Test
-    void updateRecord_ShouldReturnForbidden_WhenPatient() throws Exception {
-        UpdateMedicalRecordRequest request =
-                new UpdateMedicalRecordRequest(
-                        "Updated Diagnosis",
-                        "Updated Symptoms",
-                        "Updated Receipt"
-                );
+                when(doctorMedicalRecordService.update(
+                                eq(1L),
+                                any(UpdateMedicalRecordRequest.class),
+                                eq("doctor")))
+                                .thenReturn(sampleResponse());
+                mockMvc.perform(
+                                put("/api/records/{id}", 1L)
+                                                .with(authentication(
+                                                                new UsernamePasswordAuthenticationToken(
+                                                                                "doctor",
+                                                                                null,
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_DOCTOR")))))
+                                                .principal(() -> "doctor")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk());
 
-        mockMvc.perform(
-                        put("/api/records/{id}", 1L)
-                                .with(authentication(
-                                        new UsernamePasswordAuthenticationToken(
-                                                "patient",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
-                                        )
-                                ))
-                                .principal(() -> "patient")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request))
-                )
-                .andExpect(status().isForbidden());
+                verify(doctorMedicalRecordService)
+                                .update(eq(1L), any(UpdateMedicalRecordRequest.class), eq("doctor"));
+        }
 
-        verify(medicalRecordService, never()).updateMedicalRecord(any(), any(), anyString());
-    }
+        @Test
+        void updateRecord_ShouldReturnForbidden_WhenPatient() throws Exception {
+                UpdateMedicalRecordRequest request = new UpdateMedicalRecordRequest(
+                                "Updated Diagnosis",
+                                "Updated Symptoms",
+                                "Updated Receipt");
+
+                mockMvc.perform(
+                                put("/api/records/{id}", 1L)
+                                                .with(authentication(
+                                                                new UsernamePasswordAuthenticationToken(
+                                                                                "patient",
+                                                                                null,
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_PATIENT")))))
+                                                .principal(() -> "patient")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isForbidden());
+
+                verify(doctorMedicalRecordService, never())
+                                .update(any(), any(UpdateMedicalRecordRequest.class), anyString());
+        }
+
+        @Test
+        void getCurrentDoctorRecords_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                Page<MedicalRecordResponseDTO> page = new PageImpl<>(
+                                List.of(sampleResponse()),
+                                PageRequest.of(0, 10),
+                                1);
+
+                when(doctorMedicalRecordService.getCurrentDoctorRecords(
+                                eq("doctor"), any(Pageable.class)))
+                                .thenReturn(page);
+
+                mockMvc.perform(get("/api/records/doctor/mine")
+                                .with(authentication(doctorAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.totalElements").value(1))
+                                .andExpect(jsonPath("$.content[0].id").value(1));
+
+                verify(doctorMedicalRecordService)
+                                .getCurrentDoctorRecords(
+                                                eq("doctor"), any(Pageable.class));
+        }
+
+        @Test
+        void getCurrentDoctorRecord_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                when(doctorMedicalRecordService
+                                .getCurrentDoctorRecord(1L, "doctor"))
+                                .thenReturn(sampleResponse());
+
+                mockMvc.perform(get("/api/records/doctor/mine/{id}", 1L)
+                                .with(authentication(doctorAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1));
+
+                verify(doctorMedicalRecordService)
+                                .getCurrentDoctorRecord(1L, "doctor");
+        }
+
+        @Test
+        void getCurrentDoctorPatients_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                when(doctorMedicalRecordService.getCurrentDoctorPatients("doctor"))
+                                .thenReturn(List.of(
+                                                new DoctorPatientResponse(
+                                                                10L, "Ali", "Aliyev", "ali@example.com")));
+
+                mockMvc.perform(get("/api/records/doctor/patients")
+                                .with(authentication(doctorAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].id").value(10))
+                                .andExpect(jsonPath("$[0].firstName").value("Ali"));
+
+                verify(doctorMedicalRecordService)
+                                .getCurrentDoctorPatients("doctor");
+        }
 }
