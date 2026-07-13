@@ -21,6 +21,7 @@ public class MedicalRecordService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final MedicalRecordMapper medicalRecordMapper;
 
+    @Transactional(readOnly = true)
     public MedicalRecordResponseDTO returnMedicalRecord(Long id) {
         MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
                 .orElseThrow(() -> new MedicalRecordNotFoundException("This medical record not found"));
