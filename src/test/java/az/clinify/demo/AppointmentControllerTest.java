@@ -10,6 +10,8 @@ import az.clinify.demo.enums.AppointmentType;
 import az.clinify.demo.security.JwtTokenProvider;
 import az.clinify.demo.service.AppointmentBookingService;
 import az.clinify.demo.service.AppointmentManagementService;
+import az.clinify.demo.service.DoctorAppointmentService;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
@@ -64,6 +66,9 @@ class AppointmentControllerTest {
 
         @MockitoBean
         private UserDetailsService userDetailsService;
+
+        @MockitoBean
+        private DoctorAppointmentService doctorAppointmentService;
 
         private AppointmentResponseDTO sampleResponse() {
 
@@ -278,8 +283,7 @@ class AppointmentControllerTest {
         }
 
         @Test
-        void updateStatus_ShouldReturnOk_WhenDoctor() throws Exception {
-
+        void updateStatus_ShouldReturnOk_WhenAdmin() throws Exception {
                 AppointmentStatusRequest request = new AppointmentStatusRequest(
                                 AppointmentStatus.APPROVED);
 
@@ -295,11 +299,10 @@ class AppointmentControllerTest {
                                                 .with(csrf())
                                                 .with(authentication(
                                                                 new UsernamePasswordAuthenticationToken(
-                                                                                "doctor",
+                                                                                "admin",
                                                                                 null,
-                                                                                List.of(
-                                                                                                new SimpleGrantedAuthority(
-                                                                                                                "ROLE_DOCTOR")))))
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_ADMIN")))))
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk())

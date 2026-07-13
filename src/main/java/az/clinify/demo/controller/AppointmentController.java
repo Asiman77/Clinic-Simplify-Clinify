@@ -6,6 +6,7 @@ import az.clinify.demo.dto.request.WalkInAppointmentRequestDTO;
 import az.clinify.demo.dto.response.AppointmentResponseDTO;
 import az.clinify.demo.service.AppointmentBookingService;
 import az.clinify.demo.service.AppointmentManagementService;
+import az.clinify.demo.service.DoctorAppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,7 @@ public class AppointmentController {
 
     private final AppointmentManagementService appointmentManagementService;
     private final AppointmentBookingService appointmentBookingService;
+    private final DoctorAppointmentService doctorAppointmentService;
 
     @GetMapping
     public ResponseEntity<List<AppointmentResponseDTO>> getAllAppointments() {
@@ -125,10 +127,63 @@ public class AppointmentController {
      * @param request new status to apply
      * @return updated appointment
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<AppointmentResponseDTO> updateStatus(
             @PathVariable Long id,
             @RequestBody AppointmentStatusRequest request) {
         return ResponseEntity.ok(appointmentManagementService.updateStatus(id, request));
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @GetMapping("/doctor/mine")
+    public ResponseEntity<Page<AppointmentResponseDTO>> getCurrentDoctorAppointments(
+            Authentication authentication,
+            @PageableDefault(page = 0, size = 10, sort = "startTime", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<AppointmentResponseDTO> appointments = doctorAppointmentService.getCurrentDoctorAppointments(
+                authentication.getName(),
+                pageable);
+
+        return ResponseEntity.ok(appointments);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PatchMapping("/{appointmentId}/approve")
+    public ResponseEntity<AppointmentResponseDTO> approveAppointment(
+            @PathVariable Long appointmentId,
+            Authentication authentication) {
+
+        AppointmentResponseDTO response = doctorAppointmentService.approve(
+                appointmentId,
+                authentication.getName());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PatchMapping("/{appointmentId}/reject")
+    public ResponseEntity<AppointmentResponseDTO> rejectAppointment(
+            @PathVariable Long appointmentId,
+            Authentication authentication) {
+
+        AppointmentResponseDTO response = doctorAppointmentService.reject(
+                appointmentId,
+                authentication.getName());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('DOCTOR')")
+    @PatchMapping("/{appointmentId}/complete")
+    public ResponseEntity<AppointmentResponseDTO> completeAppointment(
+            @PathVariable Long appointmentId,
+            Authentication authentication) {
+
+        AppointmentResponseDTO response = doctorAppointmentService.complete(
+                appointmentId,
+                authentication.getName());
+
+        return ResponseEntity.ok(response);
     }
 }
