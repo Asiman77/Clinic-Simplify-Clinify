@@ -12,27 +12,29 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, Long> {
-    Optional<DoctorProfile> findByUserId(Long userId);
+        Optional<DoctorProfile> findByUserId(Long userId);
 
-    boolean existsByUserId(Long userId);
+        Optional<DoctorProfile> findByUserFin(String fin);
 
-    List<DoctorProfile> findByActiveTrue();
+        boolean existsByUserId(Long userId);
 
-    List<DoctorProfile> findByDepartmentIdAndActiveTrue(Long departmentId);
+        List<DoctorProfile> findByActiveTrue();
 
-    Page<DoctorProfile> findByActiveTrue(Pageable pageable);
+        List<DoctorProfile> findByDepartmentIdAndActiveTrue(Long departmentId);
 
-    @Query("""
-                SELECT d
-                FROM DoctorProfile d
-                WHERE (:departmentId IS NULL OR d.department.id = :departmentId)
-                  AND (:specialization IS NULL OR LOWER(d.specialization) LIKE LOWER(CONCAT('%', :specialization, '%')))
-                  AND (:experienceYears IS NULL OR d.experienceYears = :experienceYears)
-            """)
-    Page<DoctorProfile> findByFilters(
-            @Param("departmentId") Long departmentId,
-            @Param("specialization") String specialization,
-            @Param("experienceYears") Integer experienceYears,
-            Pageable pageable);
+        Page<DoctorProfile> findByActiveTrue(Pageable pageable);
+
+        @Query("""
+                            SELECT d
+                            FROM DoctorProfile d
+                            WHERE (:departmentId IS NULL OR d.department.id = :departmentId)
+                              AND (:specialization IS NULL OR LOWER(d.specialization) LIKE LOWER(CONCAT('%', :specialization, '%')))
+                              AND (:experienceYears IS NULL OR d.experienceYears = :experienceYears)
+                        """)
+        Page<DoctorProfile> findByFilters(
+                        @Param("departmentId") Long departmentId,
+                        @Param("specialization") String specialization,
+                        @Param("experienceYears") Integer experienceYears,
+                        Pageable pageable);
 
 }
