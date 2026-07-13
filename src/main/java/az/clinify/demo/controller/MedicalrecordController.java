@@ -5,7 +5,6 @@ import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
 import az.clinify.demo.dto.response.DoctorPatientResponse;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
-import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.service.DoctorMedicalRecordService;
 import az.clinify.demo.service.MedicalRecordService;
 import jakarta.validation.Valid;
@@ -57,13 +56,13 @@ public class MedicalrecordController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<MedicalRecord> updateRecord(
+    public ResponseEntity<MedicalRecordResponseDTO> updateRecord(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateMedicalRecordRequest dto,
+            @Valid @RequestBody UpdateMedicalRecordRequest request,
             Principal principal) {
-        String currentDoctorUsername = principal.getName();
-        MedicalRecord updatedRecord = service.updateMedicalRecord(id, dto, currentDoctorUsername);
-        return ResponseEntity.ok(updatedRecord);
+
+        MedicalRecordResponseDTO response = doctorMedicalRecordService.update(id, request, principal.getName());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/doctor/mine")

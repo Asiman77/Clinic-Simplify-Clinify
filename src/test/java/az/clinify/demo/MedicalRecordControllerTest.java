@@ -100,18 +100,6 @@ class MedicalRecordControllerTest {
                 return dto;
         }
 
-        private MedicalRecord sampleMedicalRecord() {
-                MedicalRecord record = new MedicalRecord();
-                record.setId(1L);
-                record.setDiagnosis("Updated Diagnosis");
-                record.setSymptoms("Updated Symptoms");
-                record.setReceipt("Updated Receipt");
-                record.setRecordDate(LocalDateTime.now());
-                record.setCreatedAt(LocalDateTime.now());
-                record.setUpdatedAt(LocalDateTime.now());
-                return record;
-        }
-
         private UsernamePasswordAuthenticationToken doctorAuthentication() {
                 return new UsernamePasswordAuthenticationToken(
                                 "doctor",
@@ -234,17 +222,16 @@ class MedicalRecordControllerTest {
 
         @Test
         void updateRecord_ShouldReturnOk_WhenDoctor() throws Exception {
-
                 UpdateMedicalRecordRequest request = new UpdateMedicalRecordRequest(
                                 "Updated Diagnosis",
                                 "Updated Symptoms",
                                 "Updated Receipt");
 
-                when(medicalRecordService.updateMedicalRecord(
+                when(doctorMedicalRecordService.update(
                                 eq(1L),
                                 any(UpdateMedicalRecordRequest.class),
-                                anyString())).thenReturn(sampleMedicalRecord());
-
+                                eq("doctor")))
+                                .thenReturn(sampleResponse());
                 mockMvc.perform(
                                 put("/api/records/{id}", 1L)
                                                 .with(authentication(
@@ -258,11 +245,8 @@ class MedicalRecordControllerTest {
                                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk());
 
-                verify(medicalRecordService)
-                                .updateMedicalRecord(
-                                                eq(1L),
-                                                any(UpdateMedicalRecordRequest.class),
-                                                eq("doctor"));
+                verify(doctorMedicalRecordService)
+                                .update(eq(1L), any(UpdateMedicalRecordRequest.class), eq("doctor"));
         }
 
         @Test
@@ -285,7 +269,8 @@ class MedicalRecordControllerTest {
                                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isForbidden());
 
-                verify(medicalRecordService, never()).updateMedicalRecord(any(), any(), anyString());
+                verify(doctorMedicalRecordService, never())
+                                .update(any(), any(UpdateMedicalRecordRequest.class), anyString());
         }
 
         @Test
