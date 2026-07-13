@@ -2,6 +2,9 @@ package az.clinify.demo.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -13,9 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Sort;
 
+import az.clinify.demo.dto.response.LabResponseSummaryDTO;
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
+import az.clinify.demo.dto.response.LabResponseDetailDTO;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.service.LabResponseService;
 import jakarta.validation.Valid;
@@ -25,48 +31,52 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/lab-responses")
 @RequiredArgsConstructor
 public class LabResponseController {
-    private final LabResponseService labResponseService;
+        private final LabResponseService labResponseService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<LabResponseResponseDTO> getLabResponseById(
-            @PathVariable Long id) {
-        return ResponseEntity.ok(
-                labResponseService.getLabResponseById(id));
-    }
+        @GetMapping
+        public ResponseEntity<Page<LabResponseSummaryDTO>> getAllLabResponses(
+                        @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+                return ResponseEntity.ok(labResponseService.getAllLabResponses(pageable));
+        }
 
-    @GetMapping("/medical-record/{medicalRecordId}")
-    public ResponseEntity<List<LabResponseResponseDTO>> getLabResponsesByMedicalRecordId(
-            @PathVariable Long medicalRecordId) {
-        return ResponseEntity.ok(
-                labResponseService.getLabResponsesByMedicalRecordId(medicalRecordId));
-    }
+        @GetMapping("/{id}")
+        public ResponseEntity<LabResponseDetailDTO> getLabResponseById(@PathVariable Long id) {
+                return ResponseEntity.ok(labResponseService.getLabResponseDetail(id));
+        }
 
-    @GetMapping("/pending")
-    public ResponseEntity<List<LabResponseResponseDTO>> getPendingLabResponses() {
-        return ResponseEntity.ok(
-                labResponseService.getPendingLabResponses());
-    }
+        @GetMapping("/medical-record/{medicalRecordId}")
+        public ResponseEntity<List<LabResponseResponseDTO>> getLabResponsesByMedicalRecordId(
+                        @PathVariable Long medicalRecordId) {
+                return ResponseEntity.ok(
+                                labResponseService.getLabResponsesByMedicalRecordId(medicalRecordId));
+        }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<LabResponseResponseDTO> updateLabResponse(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateLabResponseRequest request) {
-        return ResponseEntity.ok(
-                labResponseService.updateLabResponse(id, request));
-    }
+        @GetMapping("/pending")
+        public ResponseEntity<Page<LabResponseSummaryDTO>> getOpenLabResponses(
+                        @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
+                return ResponseEntity.ok(labResponseService.getOpenLabResponses(pageable));
+        }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<LabResponseResponseDTO> updateLabResponseStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody LabResponseStatusRequest request) {
-        return ResponseEntity.ok(
-                labResponseService.updateLabResponseStatus(id, request));
-    }
+        @PutMapping("/{id}")
+        public ResponseEntity<LabResponseResponseDTO> updateLabResponse(
+                        @PathVariable Long id,
+                        @Valid @RequestBody UpdateLabResponseRequest request) {
+                return ResponseEntity.ok(
+                                labResponseService.updateLabResponse(id, request));
+        }
 
-    @PostMapping("/{id}/files")
-    public ResponseEntity<LabResponseResponseDTO> uploadLabResponseFile(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(labResponseService.uploadLabResponseFile(id, file));
-    }
+        @PatchMapping("/{id}/status")
+        public ResponseEntity<LabResponseResponseDTO> updateLabResponseStatus(
+                        @PathVariable Long id,
+                        @Valid @RequestBody LabResponseStatusRequest request) {
+                return ResponseEntity.ok(
+                                labResponseService.updateLabResponseStatus(id, request));
+        }
+
+        @PostMapping("/{id}/files")
+        public ResponseEntity<LabResponseResponseDTO> uploadLabResponseFile(
+                        @PathVariable Long id,
+                        @RequestParam("file") MultipartFile file) {
+                return ResponseEntity.ok(labResponseService.uploadLabResponseFile(id, file));
+        }
 }
