@@ -104,10 +104,9 @@ public class DoctorMedicalRecordService {
 
         DoctorProfile doctor = getCurrentDoctor(authenticatedFin);
 
-        return appointmentRepository
-                .findDistinctPatientsByDoctorIdAndStatusIn(
-                        doctor.getId(),
-                        ELIGIBLE_APPOINTMENT_STATUSES)
+        return appointmentRepository.findDistinctPatientsByDoctorIdAndStatusIn(
+                doctor.getId(),
+                ELIGIBLE_APPOINTMENT_STATUSES)
                 .stream()
                 .map(patient -> new DoctorPatientResponse(
                         patient.getId(),

@@ -1,18 +1,12 @@
 package az.clinify.demo.service;
 
-import az.clinify.demo.dto.request.MedicalRecordRequestDTO;
 import az.clinify.demo.dto.request.UpdateMedicalRecordRequest;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordSummaryDto;
-import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.MedicalRecord;
-import az.clinify.demo.entity.User;
 import az.clinify.demo.exceptions.MedicalRecordNotFoundException;
-import az.clinify.demo.exceptions.UserNotFoundException;
 import az.clinify.demo.mapper.MedicalRecordMapper;
-import az.clinify.demo.repository.DoctorProfileRepository;
 import az.clinify.demo.repository.MedicalRecordRepository;
-import az.clinify.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -21,31 +15,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class MedicalRecordService {
     private final MedicalRecordRepository medicalRecordRepository;
-    private final UserRepository userRepository;
-    private final DoctorProfileRepository doctorProfileRepository;
     private final MedicalRecordMapper medicalRecordMapper;
-
-    @Transactional
-    public MedicalRecordResponseDTO CreateMedicalRecord(MedicalRecordRequestDTO request) {
-        User patient = userRepository.findById(request.getPatientId())
-                .orElseThrow(() -> new UserNotFoundException("Patient not found"));
-        DoctorProfile doctor = doctorProfileRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
-        MedicalRecord medicalRecord =
-                medicalRecordMapper.toEntity(request, patient, doctor);
-
-        MedicalRecord savedMedicalRecord =
-                medicalRecordRepository.save(medicalRecord);
-
-        return medicalRecordMapper.toResponse(savedMedicalRecord);
-    }
 
     public MedicalRecordResponseDTO returnMedicalRecord(Long id) {
         MedicalRecord medicalRecord = medicalRecordRepository.findById(id)
