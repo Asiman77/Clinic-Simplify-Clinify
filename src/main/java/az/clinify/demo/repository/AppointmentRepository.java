@@ -24,6 +24,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                         Long appointmentId,
                         Long patientId);
 
+        Optional<Appointment> findByIdAndDoctorId(
+                        Long appointmentId,
+                        Long doctorId);
+
         @Query("""
                         SELECT COUNT(a) > 0
                         FROM Appointment a

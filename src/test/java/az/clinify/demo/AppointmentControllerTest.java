@@ -10,6 +10,8 @@ import az.clinify.demo.enums.AppointmentType;
 import az.clinify.demo.security.JwtTokenProvider;
 import az.clinify.demo.service.AppointmentBookingService;
 import az.clinify.demo.service.AppointmentManagementService;
+import az.clinify.demo.service.DoctorAppointmentService;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.Test;
@@ -64,6 +66,9 @@ class AppointmentControllerTest {
 
         @MockitoBean
         private UserDetailsService userDetailsService;
+
+        @MockitoBean
+        private DoctorAppointmentService doctorAppointmentService;
 
         private AppointmentResponseDTO sampleResponse() {
 
@@ -160,23 +165,28 @@ class AppointmentControllerTest {
         }
 
         @Test
-        void getByDoctor_ShouldReturnOk() throws Exception {
+        void getByDoctor_ShouldReturnOk_WhenReception()
+                        throws Exception {
 
                 Page<AppointmentResponseDTO> page = new PageImpl<>(
                                 List.of(sampleResponse()),
                                 PageRequest.of(0, 10),
                                 1);
 
-                when(appointmentManagementService.getByDoctor(eq(20L), any(Pageable.class)))
+                when(appointmentManagementService.getByDoctor(
+                                eq(20L),
+                                any(Pageable.class)))
                                 .thenReturn(page);
 
                 mockMvc.perform(get("/api/appointments/doctor/{id}", 20L)
                                 .param("page", "0")
                                 .param("size", "10")
-                                .with(authentication(new UsernamePasswordAuthenticationToken(
-                                                "doctor",
-                                                null,
-                                                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))))))
+                                .with(authentication(
+                                                new UsernamePasswordAuthenticationToken(
+                                                                "reception",
+                                                                null,
+                                                                List.of(new SimpleGrantedAuthority(
+                                                                                "ROLE_RECEPTION"))))))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.content[0].doctorId").value(20))
                                 .andExpect(jsonPath("$.totalElements").value(1));
@@ -278,8 +288,7 @@ class AppointmentControllerTest {
         }
 
         @Test
-        void updateStatus_ShouldReturnOk_WhenDoctor() throws Exception {
-
+        void updateStatus_ShouldReturnOk_WhenAdmin() throws Exception {
                 AppointmentStatusRequest request = new AppointmentStatusRequest(
                                 AppointmentStatus.APPROVED);
 
@@ -295,11 +304,10 @@ class AppointmentControllerTest {
                                                 .with(csrf())
                                                 .with(authentication(
                                                                 new UsernamePasswordAuthenticationToken(
-                                                                                "doctor",
+                                                                                "admin",
                                                                                 null,
-                                                                                List.of(
-                                                                                                new SimpleGrantedAuthority(
-                                                                                                                "ROLE_DOCTOR")))))
+                                                                                List.of(new SimpleGrantedAuthority(
+                                                                                                "ROLE_ADMIN")))))
                                                 .contentType(MediaType.APPLICATION_JSON)
                                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isOk())
@@ -329,6 +337,63 @@ class AppointmentControllerTest {
 
                 verify(appointmentManagementService, never())
                                 .updateStatus(any(), any());
+        }
+
+        @Test
+        void getCurrentDoctorAppointments_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                Page<AppointmentResponseDTO> page = new PageImpl<>(
+                                List.of(sampleResponse()),
+                                PageRequest.of(0, 10),
+                                1);
+
+                when(doctorAppointmentService.getCurrentDoctorAppointments(
+                                eq("doctor"),
+                                any(Pageable.class)))
+                                .thenReturn(page);
+
+                mockMvc.perform(get("/api/appointments/doctor/mine")
+                                .param("page", "0")
+                                .param("size", "10")
+                                .with(authentication(
+                                                new UsernamePasswordAuthenticationToken(
+                                                                "doctor",
+                                                                null,
+                                                                List.of(new SimpleGrantedAuthority(
+                                                                                "ROLE_DOCTOR"))))))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.totalElements").value(1))
+                                .andExpect(jsonPath("$.content[0].doctorId").value(20));
+
+                verify(doctorAppointmentService)
+                                .getCurrentDoctorAppointments(
+                                                eq("doctor"),
+                                                any(Pageable.class));
+        }
+
+        @Test
+        void approveAppointment_ShouldReturnOk_WhenDoctor()
+                        throws Exception {
+
+                AppointmentResponseDTO response = sampleResponse();
+                response.setStatus(AppointmentStatus.APPROVED);
+
+                when(doctorAppointmentService.approve(1L, "doctor"))
+                                .thenReturn(response);
+
+                mockMvc.perform(patch("/api/appointments/{id}/approve", 1L)
+                                .with(csrf())
+                                .with(authentication(
+                                                new UsernamePasswordAuthenticationToken(
+                                                                "doctor",
+                                                                null,
+                                                                List.of(new SimpleGrantedAuthority(
+                                                                                "ROLE_DOCTOR"))))))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.status").value("APPROVED"));
+
+                verify(doctorAppointmentService).approve(1L, "doctor");
         }
 
 }

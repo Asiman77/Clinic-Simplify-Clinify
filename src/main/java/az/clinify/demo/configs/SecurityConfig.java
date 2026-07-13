@@ -107,6 +107,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/availabilities/**").hasAnyRole("ADMIN", "DOCTOR")
 
                         .requestMatchers(HttpMethod.GET, "/api/appointments/mine").hasRole("PATIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/mine").hasRole("DOCTOR")
                         .requestMatchers(HttpMethod.GET, "/api/appointments").hasAnyRole("ADMIN", "RECEPTION")
                         .requestMatchers(HttpMethod.POST, "/api/appointments/walk-in").hasRole("RECEPTION")
                         .requestMatchers(HttpMethod.POST, "/api/appointments").hasRole("PATIENT")
@@ -114,11 +115,13 @@ public class SecurityConfig {
                         .hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
                         .requestMatchers(HttpMethod.GET, "/api/appointments/patient/**")
                         .hasAnyRole("ADMIN", "RECEPTION")
-                        .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/**")
-                        .hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/doctor/*").hasAnyRole("ADMIN", "RECEPTION")
                         .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/cancel").hasRole("PATIENT")
+                        .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/approve", "/api/appointments/*/reject",
+                                "/api/appointments/*/complete")
+                        .hasRole("DOCTOR")
                         .requestMatchers(HttpMethod.PATCH, "/api/appointments/*/status")
-                        .hasAnyRole("ADMIN", "DOCTOR", "RECEPTION")
+                        .hasAnyRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/records/**")
                         .hasAnyRole("ADMIN", "PATIENT", "DOCTOR", "LAB_TECHNICIAN")
