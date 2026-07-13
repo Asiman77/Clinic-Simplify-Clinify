@@ -1,6 +1,7 @@
 package az.clinify.demo.service;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -46,6 +47,34 @@ public class CloudinaryUploadService {
                     String.valueOf(uploadResult.get("resource_type")));
         } catch (IOException e) {
             throw new BaseBadRequestException("Could not upload lab response file");
+        }
+    }
+
+    public void deleteLabResponseFile(
+            LabResponseFileMetadata fileMetadata) {
+
+        if (fileMetadata == null || fileMetadata.getPublicId() == null || fileMetadata.getPublicId().isBlank()) {
+            throw new BaseBadRequestException(
+                    "Lab response file metadata is invalid");
+        }
+
+        Map<String, Object> options = new HashMap<>();
+        options.put("invalidate", true);
+
+        if (fileMetadata.getResourceType() != null && !fileMetadata.getResourceType().isBlank()) {
+            options.put("resource_type", fileMetadata.getResourceType());
+        }
+
+        try {
+            Map<?, ?> deleteResult = cloudinary.uploader().destroy(fileMetadata.getPublicId(), options);
+            String result = String.valueOf(deleteResult.get("result"));
+
+            if (!"ok".equals(result) && !"not found".equals(result)) {
+                throw new BaseBadRequestException("Could not delete lab response file");
+            }
+        } catch (IOException exception) {
+            throw new BaseBadRequestException(
+                    "Could not delete lab response file");
         }
     }
 

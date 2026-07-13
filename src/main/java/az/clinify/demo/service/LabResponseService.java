@@ -21,6 +21,7 @@ import az.clinify.demo.dto.response.LabResponseSummaryDTO;
 import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.exceptions.BaseBadRequestException;
+import az.clinify.demo.exceptions.BaseNotFoundException;
 import az.clinify.demo.exceptions.InvalidStatusException;
 import az.clinify.demo.exceptions.LabResponseNotFoundException;
 import az.clinify.demo.mapper.LabResponseMapper;
@@ -138,6 +139,33 @@ public class LabResponseService {
             labResponse.setFiles(new ArrayList<>());
         }
         labResponse.getFiles().add(fileMetadata);
+        LabResponse savedResponse = labResponseRepository.save(labResponse);
+        return labResponseMapper.toResponse(savedResponse);
+    }
+
+    @Transactional
+    public LabResponseResponseDTO deleteLabResponseFile(
+            Long id,
+            String publicId,
+            String authenticatedFin) {
+        LabResponse labResponse = getLabResponseEntityById(id);
+        validateEditable(labResponse);
+        User technician = getCurrentLabTechnician(authenticatedFin);
+        assignOrValidateTechnician(labResponse, technician);
+        if (labResponse.getFiles() == null) {
+            throw new BaseNotFoundException(
+                    "Lab response file not found");
+        }
+
+        LabResponseFileMetadata fileMetadata = labResponse.getFiles()
+                .stream()
+                .filter(file -> publicId.equals(file.getPublicId()))
+                .findFirst()
+                .orElseThrow(() -> new BaseNotFoundException(
+                        "Lab response file not found"));
+
+        cloudinaryUploadService.deleteLabResponseFile(fileMetadata);
+        labResponse.getFiles().remove(fileMetadata);
         LabResponse savedResponse = labResponseRepository.save(labResponse);
         return labResponseMapper.toResponse(savedResponse);
     }

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Sort;
 
+import az.clinify.demo.dto.request.DeleteLabResponseFileRequest;
 import az.clinify.demo.dto.response.LabResponseSummaryDTO;
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
@@ -88,5 +90,15 @@ public class LabResponseController {
                         @RequestParam("file") MultipartFile file,
                         Principal principal) {
                 return ResponseEntity.ok(labResponseService.uploadLabResponseFile(id, file, principal.getName()));
+        }
+
+        @DeleteMapping("/{id}/files")
+        @PreAuthorize("hasRole('LAB_TECHNICIAN')")
+        public ResponseEntity<LabResponseResponseDTO> deleteLabResponseFile(
+                        @PathVariable Long id,
+                        @Valid @RequestBody DeleteLabResponseFileRequest request,
+                        Principal principal) {
+                return ResponseEntity.ok(labResponseService.deleteLabResponseFile(id, request.getPublicId(),
+                                principal.getName()));
         }
 }

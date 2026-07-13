@@ -1,6 +1,7 @@
 package az.clinify.demo;
 
 import az.clinify.demo.configs.SecurityConfig;
+import az.clinify.demo.dto.request.DeleteLabResponseFileRequest;
 import az.clinify.demo.controller.LabResponseController;
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
@@ -44,6 +45,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
 @WebMvcTest(LabResponseController.class)
 @Import(SecurityConfig.class)
@@ -301,5 +303,57 @@ class LabResponseControllerTest {
                                 eq(1L),
                                 any(UpdateLabResponseRequest.class),
                                 eq("admin"));
+        }
+
+        @Test
+        void deleteLabResponseFile_ShouldReturnOk()
+                        throws Exception {
+
+                String publicId = "clinify/lab-responses/1/result";
+
+                DeleteLabResponseFileRequest request = new DeleteLabResponseFileRequest(publicId);
+
+                LabResponseResponseDTO response = new LabResponseResponseDTO();
+
+                when(labResponseService.deleteLabResponseFile(
+                                1L,
+                                publicId,
+                                "lab-technician"))
+                                .thenReturn(response);
+
+                mockMvc.perform(delete("/api/lab-responses/{id}/files", 1L)
+                                .with(authentication(authenticationFor(
+                                                "lab-technician",
+                                                "LAB_TECHNICIAN")))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper
+                                                .writeValueAsString(request)))
+                                .andExpect(status().isOk());
+
+                verify(labResponseService).deleteLabResponseFile(
+                                1L,
+                                publicId,
+                                "lab-technician");
+        }
+
+        @Test
+        void deleteLabResponseFile_ShouldReturnForbidden_WhenAdmin()
+                        throws Exception {
+                String publicId = "clinify/lab-responses/1/result";
+                DeleteLabResponseFileRequest request = new DeleteLabResponseFileRequest(publicId);
+                mockMvc.perform(delete("/api/lab-responses/{id}/files", 1L)
+                                .with(authentication(authenticationFor(
+                                                "admin",
+                                                "ADMIN")))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isForbidden());
+
+                verify(labResponseService, never()).deleteLabResponseFile(
+                                1L,
+                                publicId,
+                                "admin");
         }
 }
