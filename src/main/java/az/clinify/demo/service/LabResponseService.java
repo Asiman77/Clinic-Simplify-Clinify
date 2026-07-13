@@ -89,6 +89,7 @@ public class LabResponseService {
     public LabResponseResponseDTO updateLabResponse(Long id, UpdateLabResponseRequest request,
             String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
+        validateEditable(labResponse);
         User technician = getCurrentLabTechnician(authenticatedFin);
         assignOrValidateTechnician(labResponse, technician);
         if (request.getResultText() != null) {
@@ -98,7 +99,7 @@ public class LabResponseService {
             labResponse.setNote(request.getNote());
         }
         if (request.getStatus() != null) {
-            validateStatusUpdate(labResponse, request.getStatus());
+            validateStatusTransition(labResponse, request.getStatus());
             validateCompletedStatus(labResponse, request.getStatus());
             labResponse.setStatus(request.getStatus());
         }
@@ -110,9 +111,10 @@ public class LabResponseService {
     public LabResponseResponseDTO updateLabResponseStatus(Long id, LabResponseStatusRequest request,
             String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
+        validateEditable(labResponse);
         User technician = getCurrentLabTechnician(authenticatedFin);
         assignOrValidateTechnician(labResponse, technician);
-        validateStatusUpdate(labResponse, request.getStatus());
+        validateStatusTransition(labResponse, request.getStatus());
         validateCompletedStatus(labResponse, request.getStatus());
         labResponse.setStatus(request.getStatus());
         LabResponse savedResponse = labResponseRepository.save(labResponse);
@@ -125,6 +127,7 @@ public class LabResponseService {
             MultipartFile file,
             String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
+        validateEditable(labResponse);
         User technician = getCurrentLabTechnician(authenticatedFin);
 
         assignOrValidateTechnician(labResponse, technician);
@@ -158,18 +161,53 @@ public class LabResponseService {
         }
     }
 
-    private void validateStatusUpdate(LabResponse labResponse, LabStatuses requestedStatus) {
-        if (labResponse.getStatus() == LabStatuses.COMPLETED || labResponse.getStatus() == LabStatuses.CANCELLED) {
-            throw new InvalidStatusException("Final lab response status cannot be changed");
-        }
-
-        if (requestedStatus == LabStatuses.NOT_REQUIRED || requestedStatus == LabStatuses.REQUESTED) {
-            throw new InvalidStatusException("Invalid lab response status: " + requestedStatus);
+    private void validateEditable(LabResponse labResponse) {
+        if (isFinalStatus(labResponse.getStatus())) {
+            throw new InvalidStatusException(
+                    "Completed or cancelled lab responses cannot be modified");
         }
     }
 
+    private void validateStatusTransition(
+            LabResponse labResponse,
+            LabStatuses requestedStatus) {
+
+        LabStatuses currentStatus = labResponse.getStatus();
+
+        if (currentStatus == requestedStatus) {
+            return;
+        }
+
+        boolean validTransition = switch (currentStatus) {
+            case PENDING ->
+                requestedStatus == LabStatuses.IN_PROGRESS
+                        || requestedStatus == LabStatuses.CANCELLED;
+
+            case IN_PROGRESS ->
+                requestedStatus == LabStatuses.COMPLETED
+                        || requestedStatus == LabStatuses.CANCELLED;
+
+            default -> false;
+        };
+
+        if (!validTransition) {
+            throw new InvalidStatusException(
+                    "Invalid lab response status transition: "
+                            + currentStatus
+                            + " -> "
+                            + requestedStatus);
+        }
+    }
+
+    private boolean isFinalStatus(LabStatuses status) {
+        return status == LabStatuses.COMPLETED
+                || status == LabStatuses.CANCELLED;
+    }
+
     private User getCurrentLabTechnician(String authenticatedFin) {
-        return userRepository.findByFin(authenticatedFin).orElseThrow(() -> new UserNotFoundException("Lab technician could not be found"));
+        return userRepository.findByFin(authenticatedFin)
+
+                .orElseThrow(() -> new UserNotFoundException("Lab technician could not be found"));
     }
 
     private void assignOrValidateTechnician(LabResponse labResponse, User technician) {
