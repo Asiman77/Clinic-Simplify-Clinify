@@ -25,28 +25,32 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
             Long patientId);
 
     @Query(value = """
-                SELECT new az.clinify.demo.dto.response.MedicalRecordSummaryDto(
-                    m.id,
-                    m.diagnosis,
-                    m.recordDate,
-                    CONCAT(m.doctor.user.firstName, ' ', m.doctor.user.lastName),
-                    COUNT(labResponse.id)
-                )
-                FROM MedicalRecord m
-                LEFT JOIN m.labResponses labResponse
-                WHERE m.patient.id = :patientId
-                GROUP BY
-                    m.id,
-                    m.diagnosis,
-                    m.recordDate,
-                    m.doctor.user.firstName,
-                    m.doctor.user.lastName
-                ORDER BY m.recordDate DESC
+            SELECT
+                mr.id,
+                mr.diagnosis,
+                mr.record_date,
+                CONCAT(u.first_name, ' ', u.last_name) AS doctor_name,
+                COUNT(lr.id) AS lab_response_count
+            FROM medical_records mr
+            LEFT JOIN doctor_profiles dp
+                ON mr.doctor_id = dp.id
+            LEFT JOIN users u
+                ON dp.user_id = u.id
+            LEFT JOIN lab_responses lr
+                ON lr.medical_record_id = mr.id
+            WHERE mr.patient_id = :patientId
+            GROUP BY
+                mr.id,
+                mr.diagnosis,
+                mr.record_date,
+                u.first_name,
+                u.last_name
+            ORDER BY mr.record_date DESC
             """, countQuery = """
-                SELECT COUNT(m)
-                FROM MedicalRecord m
-                WHERE m.patient.id = :patientId
-            """)
+                SELECT COUNT(*)
+                FROM medical_records
+                WHERE patient_id = :patientId
+            """, nativeQuery = true)
     Page<MedicalRecordSummaryDto> findAllSummaryByPatientId(
             @Param("patientId") Long patientId,
             Pageable pageable);
