@@ -54,6 +54,28 @@ public class MedicalrecordController {
         return ResponseEntity.ok(service.getPatientMedicalRecords(patientId, pageable));
     }
 
+    @GetMapping("/patient/mine")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<Page<MedicalRecordSummaryDto>> getCurrentPatientRecords(
+            Principal principal,
+            @PageableDefault(page = 0, size = 10, sort = "recordDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(
+                service.getCurrentPatientMedicalRecords(
+                        principal.getName(),
+                        pageable));
+    }
+
+    @GetMapping("/patient/mine/{recordId}")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<MedicalRecordResponseDTO> getCurrentPatientRecord(
+            @PathVariable Long recordId,
+            Principal principal) {
+        return ResponseEntity.ok(
+                service.getCurrentPatientMedicalRecord(
+                        recordId,
+                        principal.getName()));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<MedicalRecordResponseDTO> updateRecord(

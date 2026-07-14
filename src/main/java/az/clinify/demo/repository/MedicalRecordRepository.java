@@ -20,6 +20,10 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
             Long recordId,
             Long doctorId);
 
+    Optional<MedicalRecord> findByIdAndPatientId(
+            Long recordId,
+            Long patientId);
+
     @Query(value = """
                 SELECT new az.clinify.demo.dto.response.MedicalRecordSummaryDto(
                     m.id,
