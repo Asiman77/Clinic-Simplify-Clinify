@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -153,6 +154,119 @@ class MedicalRecordIntegrationTest {
         assertThat(medicalRecordRepository.count()).isZero();
     }
 
+    @Test
+    void getPatientRecords_returnsNewestRecordsFirst_whenUserIsAdmin() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.APPROVED);
+        saveRecord(fixture, "Older diagnosis", "Old symptoms", "Old receipt",
+                LocalDateTime.of(2026, 7, 8, 10, 0));
+        saveRecord(fixture, "Newest diagnosis", "New symptoms", "New receipt",
+                LocalDateTime.of(2026, 7, 12, 14, 0));
+
+        mockMvc.perform(get("/api/records/patient/{patientId}", fixture.patient().getId())
+                        .param("page", "0")
+                        .param("size", "10")
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[0].diagnosis").value("Newest diagnosis"))
+                .andExpect(jsonPath("$.content[1].diagnosis").value("Older diagnosis"));
+    }
+
+    @Test
+    void getCurrentDoctorRecords_returnsOnlyAuthenticatedDoctorsRecords() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.COMPLETED);
+        MedicalRecord ownRecord = saveRecord(fixture, "Own diagnosis", null, null,
+                LocalDateTime.of(2026, 7, 11, 11, 0));
+        DoctorProfile otherDoctor = saveAdditionalDoctor(fixture.doctor().getDepartment());
+        saveRecord(new Fixture(otherDoctor, fixture.patient()), "Other diagnosis", null, null,
+                LocalDateTime.of(2026, 7, 12, 11, 0));
+
+        mockMvc.perform(get("/api/records/doctor/mine")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .with(user(DOCTOR_FIN).roles("DOCTOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(ownRecord.getId()))
+                .andExpect(jsonPath("$.content[0].diagnosis").value("Own diagnosis"));
+    }
+
+    @Test
+    void updateMedicalRecord_changesOwnedRecord_andPersistsFields() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.APPROVED);
+        MedicalRecord record = saveRecord(fixture, "Initial diagnosis", "Initial symptoms", "Initial receipt",
+                LocalDateTime.of(2026, 7, 10, 12, 0));
+
+        mockMvc.perform(put("/api/records/{id}", record.getId())
+                        .with(user(DOCTOR_FIN).roles("DOCTOR"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "diagnosis", "  Updated diagnosis  ",
+                                "symptoms", "Updated symptoms",
+                                "receipt", "Updated receipt"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.diagnosis").value("Updated diagnosis"))
+                .andExpect(jsonPath("$.symptoms").value("Updated symptoms"))
+                .andExpect(jsonPath("$.receipt").value("Updated receipt"));
+
+        MedicalRecord persisted = medicalRecordRepository.findById(record.getId()).orElseThrow();
+        assertThat(persisted.getDiagnosis()).isEqualTo("Updated diagnosis");
+        assertThat(persisted.getSymptoms()).isEqualTo("Updated symptoms");
+        assertThat(persisted.getReceipt()).isEqualTo("Updated receipt");
+    }
+
+    @Test
+    void getCurrentDoctorRecord_returnsNotFound_forAnotherDoctorsRecord() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.APPROVED);
+        DoctorProfile otherDoctor = saveAdditionalDoctor(fixture.doctor().getDepartment());
+        MedicalRecord otherRecord = saveRecord(
+                new Fixture(otherDoctor, fixture.patient()),
+                "Private diagnosis",
+                null,
+                null,
+                LocalDateTime.of(2026, 7, 13, 15, 0));
+
+        mockMvc.perform(get("/api/records/doctor/mine/{id}", otherRecord.getId())
+                        .with(user(DOCTOR_FIN).roles("DOCTOR")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not found"));
+    }
+
+    @Test
+    void getCurrentDoctorPatients_returnsEligiblePatientsWithoutDuplicates() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.APPROVED);
+
+        Appointment duplicateAppointment = new Appointment();
+        duplicateAppointment.setPatient(fixture.patient());
+        duplicateAppointment.setDoctor(fixture.doctor());
+        duplicateAppointment.setCreatedBy(fixture.patient());
+        duplicateAppointment.setType(AppointmentType.WALK_IN);
+        duplicateAppointment.setStatus(AppointmentStatus.COMPLETED);
+        duplicateAppointment.setStartTime(LocalDateTime.of(2026, 7, 14, 10, 0));
+        duplicateAppointment.setEndTime(LocalDateTime.of(2026, 7, 14, 10, 30));
+        appointmentRepository.saveAndFlush(duplicateAppointment);
+
+        mockMvc.perform(get("/api/records/doctor/patients")
+                        .with(user(DOCTOR_FIN).roles("DOCTOR")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(fixture.patient().getId()))
+                .andExpect(jsonPath("$[0].firstName").value("Aylin"))
+                .andExpect(jsonPath("$[0].lastName").value("Mammadova"));
+    }
+
+    @Test
+    void getMedicalRecord_returnsForbidden_whenUserIsNotAdmin() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.APPROVED);
+        MedicalRecord record = saveRecord(fixture, "Protected diagnosis", null, null,
+                LocalDateTime.of(2026, 7, 10, 16, 0));
+
+        mockMvc.perform(get("/api/records/{id}", record.getId())
+                        .with(user(PATIENT_FIN).roles("PATIENT")))
+                .andExpect(status().isForbidden());
+    }
+
     private Fixture persistFixture(AppointmentStatus appointmentStatus) {
         Department department = new Department();
         department.setName("Internal Medicine");
@@ -213,6 +327,24 @@ class MedicalRecordIntegrationTest {
         user.setPhoneNumber(phoneNumber);
         user.setHasAccount(true);
         return userRepository.saveAndFlush(user);
+    }
+
+    private DoctorProfile saveAdditionalDoctor(Department department) {
+        User doctorUser = saveUser(
+                "DOC0002",
+                "Leyla",
+                "Hasanova",
+                "leyla.hasanova@clinify.test",
+                "+994501110003");
+
+        DoctorProfile doctor = new DoctorProfile();
+        doctor.setUser(doctorUser);
+        doctor.setDepartment(department);
+        doctor.setSpecialization("Family Medicine");
+        doctor.setBio("Second integration test doctor");
+        doctor.setExperienceYears(5);
+        doctor.setActive(true);
+        return doctorProfileRepository.saveAndFlush(doctor);
     }
 
     private MedicalRecord saveRecord(
