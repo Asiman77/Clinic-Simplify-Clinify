@@ -7,24 +7,31 @@ import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.AppointmentStatus;
 import az.clinify.demo.enums.AppointmentType;
+import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.repository.AppointmentRepository;
 import az.clinify.demo.repository.DepartmentRepository;
 import az.clinify.demo.repository.DoctorProfileRepository;
 import az.clinify.demo.repository.MedicalRecordRepository;
 import az.clinify.demo.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -55,6 +62,8 @@ class MedicalRecordIntegrationTest {
     @Autowired
     private MedicalRecordRepository medicalRecordRepository;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
     void getMedicalRecord_returnsPersistedRecord_whenUserIsAdmin() throws Exception {
         Fixture fixture = persistFixture(AppointmentStatus.APPROVED);
@@ -77,6 +86,71 @@ class MedicalRecordIntegrationTest {
                 .andExpect(jsonPath("$.symptoms").value("Sneezing and itchy eyes"))
                 .andExpect(jsonPath("$.receipt").value("Cetirizine once daily"))
                 .andExpect(jsonPath("$.labResponses").isEmpty());
+    }
+
+    @Test
+    void createMedicalRecord_persistsRecordAndPendingLabTests_forEligiblePatient() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.COMPLETED);
+        Map<String, Object> request = Map.of(
+                "patientId", fixture.patient().getId(),
+                "diagnosis", "Iron deficiency anemia",
+                "symptoms", "Fatigue and dizziness",
+                "receipt", "Iron supplement",
+                "labTests", List.of(
+                        Map.of("testName", "Complete blood count", "note", "Check hemoglobin"),
+                        Map.of("testName", "Ferritin", "note", "Fasting sample")));
+
+        mockMvc.perform(post("/api/records")
+                        .with(user(DOCTOR_FIN).roles("DOCTOR"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.patientId").value(fixture.patient().getId()))
+                .andExpect(jsonPath("$.doctorId").value(fixture.doctor().getId()))
+                .andExpect(jsonPath("$.diagnosis").value("Iron deficiency anemia"))
+                .andExpect(jsonPath("$.labResponses.length()").value(2))
+                .andExpect(jsonPath("$.labResponses[0].testName").value("Complete blood count"))
+                .andExpect(jsonPath("$.labResponses[0].status").value("PENDING"));
+
+        assertThat(medicalRecordRepository.findAll())
+                .singleElement()
+                .satisfies(saved -> {
+                    assertThat(saved.getDoctor().getId()).isEqualTo(fixture.doctor().getId());
+                    assertThat(saved.getPatient().getId()).isEqualTo(fixture.patient().getId());
+                    assertThat(saved.getLabResponses()).hasSize(2);
+                    assertThat(saved.getLabResponses())
+                            .allSatisfy(lab -> assertThat(lab.getStatus()).isEqualTo(LabStatuses.PENDING));
+                });
+    }
+
+    @Test
+    void createMedicalRecord_returnsBadRequest_forBlankDiagnosis() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.APPROVED);
+
+        mockMvc.perform(post("/api/records")
+                        .with(user(DOCTOR_FIN).roles("DOCTOR"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "patientId", fixture.patient().getId(),
+                                "diagnosis", "   "))))
+                .andExpect(status().isBadRequest());
+
+        assertThat(medicalRecordRepository.count()).isZero();
+    }
+
+    @Test
+    void createMedicalRecord_returnsForbidden_withoutEligibleAppointment() throws Exception {
+        Fixture fixture = persistFixture(AppointmentStatus.REQUESTED);
+
+        mockMvc.perform(post("/api/records")
+                        .with(user(DOCTOR_FIN).roles("DOCTOR"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "patientId", fixture.patient().getId(),
+                                "diagnosis", "Migraine"))))
+                .andExpect(status().isForbidden());
+
+        assertThat(medicalRecordRepository.count()).isZero();
     }
 
     private Fixture persistFixture(AppointmentStatus appointmentStatus) {
