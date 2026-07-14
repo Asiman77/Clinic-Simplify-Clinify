@@ -13,4 +13,6 @@ public class MedicalRecordSummaryDto {
     private Long id;
     private String diagnosis;
     private LocalDateTime recordDate;
+    private String doctorFullName;
+    private Long labTestCount;
 }

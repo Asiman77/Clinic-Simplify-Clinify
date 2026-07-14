@@ -190,7 +190,9 @@ class MedicalRecordControllerTest {
                 MedicalRecordSummaryDto summary = new MedicalRecordSummaryDto(
                                 1L,
                                 "Flu",
-                                LocalDateTime.now());
+                                LocalDateTime.now(),
+                                "Dr. Vusal",
+                                1L);
 
                 Page<MedicalRecordSummaryDto> page = new PageImpl<>(
                                 List.of(summary),
@@ -213,6 +215,8 @@ class MedicalRecordControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.content[0].id").value(1))
                                 .andExpect(jsonPath("$.content[0].diagnosis").value("Flu"))
+                                .andExpect(jsonPath("$.content[0].doctorFullName").value("Dr. Vusal"))
+                                .andExpect(jsonPath("$.content[0].labTestCount").value(1))
                                 .andExpect(jsonPath("$.totalElements").value(1));
 
                 verify(medicalRecordService)
