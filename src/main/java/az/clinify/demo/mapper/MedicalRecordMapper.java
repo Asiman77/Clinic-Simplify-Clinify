@@ -7,20 +7,15 @@ import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.entity.MedicalRecord;
 import az.clinify.demo.entity.User;
 import az.clinify.demo.enums.LabStatuses;
-import az.clinify.demo.repository.DoctorProfileRepository;
-import az.clinify.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class MedicalRecordMapper {
 
-        private final UserRepository userRepository;
-        private final DoctorProfileRepository doctorProfileRepository;
         private final LabResponseMapper labResponseMapper;
 
         public MedicalRecordResponseDTO toResponse(MedicalRecord medicalRecord) {
@@ -28,13 +23,8 @@ public class MedicalRecordMapper {
                 if (medicalRecord == null) {
                         return null;
                 }
-
-                User patient = userRepository.findById(medicalRecord.getPatient().getId())
-                                .orElseThrow(() -> new RuntimeException("Patient not found"));
-
-                DoctorProfile doctor = doctorProfileRepository.findById(medicalRecord.getDoctor().getId())
-                                .orElseThrow(() -> new RuntimeException("Doctor not found"));
-
+                User patient = medicalRecord.getPatient();
+                DoctorProfile doctor = medicalRecord.getDoctor();
                 MedicalRecordResponseDTO response = new MedicalRecordResponseDTO();
 
                 response.setId(medicalRecord.getId());
@@ -57,7 +47,7 @@ public class MedicalRecordMapper {
                                 medicalRecord.getLabResponses()
                                                 .stream()
                                                 .map(labResponseMapper::toResponse)
-                                                .collect(Collectors.toList()));
+                                                .toList());
 
                 response.setCreatedAt(medicalRecord.getCreatedAt());
                 response.setUpdatedAt(medicalRecord.getUpdatedAt());
@@ -66,10 +56,9 @@ public class MedicalRecordMapper {
         }
 
         public MedicalRecord toEntity(
-                MedicalRecordRequestDTO request,
-                User patient,
-                DoctorProfile doctor
-        ) {
+                        MedicalRecordRequestDTO request,
+                        User patient,
+                        DoctorProfile doctor) {
                 if (request == null) {
                         return null;
                 }
