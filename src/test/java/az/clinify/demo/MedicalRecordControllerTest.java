@@ -6,6 +6,7 @@ import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.dto.response.MedicalRecordResponseDTO;
 import az.clinify.demo.dto.response.DoctorPatientResponse;
 import az.clinify.demo.enums.LabStatuses;
+import az.clinify.demo.valueobject.LabResponseFileMetadata;
 import az.clinify.demo.service.DoctorMedicalRecordService;
 import az.clinify.demo.security.JwtTokenProvider;
 import az.clinify.demo.service.MedicalRecordService;
@@ -90,7 +91,13 @@ class MedicalRecordControllerTest {
                                 LabStatuses.PENDING, // status
                                 "Negative", // resultText
                                 "Everything normal", // note
-                                new ArrayList<>(), // files (metadata list)
+                                List.of(new LabResponseFileMetadata(
+                                                "clinify/lab-responses/1/result",
+                                                "https://res.cloudinary.com/demo/image/upload/result.pdf",
+                                                "blood-test.pdf",
+                                                "application/pdf",
+                                                2048L,
+                                                "image")),
                                 LocalDateTime.now(), // createdAt
                                 LocalDateTime.now() // updatedAt
                 );
@@ -104,6 +111,13 @@ class MedicalRecordControllerTest {
                                 "doctor",
                                 null,
                                 List.of(new SimpleGrantedAuthority("ROLE_DOCTOR")));
+        }
+
+        private UsernamePasswordAuthenticationToken patientAuthentication() {
+                return new UsernamePasswordAuthenticationToken(
+                                "patient",
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_PATIENT")));
         }
 
         @Test
@@ -190,7 +204,9 @@ class MedicalRecordControllerTest {
                 MedicalRecordSummaryDto summary = new MedicalRecordSummaryDto(
                                 1L,
                                 "Flu",
-                                LocalDateTime.now());
+                                LocalDateTime.now(),
+                                "Dr. Vusal",
+                                1L);
 
                 Page<MedicalRecordSummaryDto> page = new PageImpl<>(
                                 List.of(summary),
@@ -213,10 +229,73 @@ class MedicalRecordControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.content[0].id").value(1))
                                 .andExpect(jsonPath("$.content[0].diagnosis").value("Flu"))
+                                .andExpect(jsonPath("$.content[0].doctorFullName").value("Dr. Vusal"))
+                                .andExpect(jsonPath("$.content[0].labTestCount").value(1))
                                 .andExpect(jsonPath("$.totalElements").value(1));
 
                 verify(medicalRecordService)
                                 .getPatientMedicalRecords(eq(10L), any(Pageable.class));
+        }
+
+        @Test
+        void getCurrentPatientRecords_ShouldReturnOk_WhenPatient() throws Exception {
+                MedicalRecordSummaryDto summary = new MedicalRecordSummaryDto(
+                                1L,
+                                "Flu",
+                                LocalDateTime.now(),
+                                "Dr. Vusal",
+                                1L);
+
+                Page<MedicalRecordSummaryDto> page = new PageImpl<>(
+                                List.of(summary),
+                                PageRequest.of(0, 10),
+                                1);
+
+                when(medicalRecordService.getCurrentPatientMedicalRecords(
+                                eq("patient"),
+                                any(Pageable.class)))
+                                .thenReturn(page);
+
+                mockMvc.perform(get("/api/records/patient/mine")
+                                .with(authentication(patientAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content[0].id").value(1))
+                                .andExpect(jsonPath("$.content[0].doctorFullName").value("Dr. Vusal"))
+                                .andExpect(jsonPath("$.content[0].labTestCount").value(1));
+
+                verify(medicalRecordService)
+                                .getCurrentPatientMedicalRecords(
+                                                eq("patient"),
+                                                any(Pageable.class));
+        }
+
+        @Test
+        void getCurrentPatientRecord_ShouldReturnOk_WhenPatient() throws Exception {
+                when(medicalRecordService.getCurrentPatientMedicalRecord(1L, "patient"))
+                                .thenReturn(sampleResponse());
+
+                mockMvc.perform(get("/api/records/patient/mine/{recordId}", 1L)
+                                .with(authentication(patientAuthentication())))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.labResponses[0].resultText").value("Negative"))
+                                .andExpect(jsonPath("$.labResponses[0].files[0].originalFileName")
+                                                .value("blood-test.pdf"));
+
+                verify(medicalRecordService)
+                                .getCurrentPatientMedicalRecord(1L, "patient");
+        }
+
+        @Test
+        void getCurrentPatientRecords_ShouldReturnForbidden_WhenDoctor() throws Exception {
+                mockMvc.perform(get("/api/records/patient/mine")
+                                .with(authentication(doctorAuthentication())))
+                                .andExpect(status().isForbidden());
+
+                verify(medicalRecordService, never())
+                                .getCurrentPatientMedicalRecords(
+                                                anyString(),
+                                                any(Pageable.class));
         }
 
         @Test

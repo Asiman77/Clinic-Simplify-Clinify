@@ -128,6 +128,10 @@ public class SecurityConfig {
                                 "/api/records/doctor/mine/*",
                                 "/api/records/doctor/patients")
                         .hasRole("DOCTOR")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/records/patient/mine",
+                                "/api/records/patient/mine/*")
+                        .hasRole("PATIENT")
                         .requestMatchers(HttpMethod.GET, "/api/records/patient/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/records/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/records").hasRole("DOCTOR")

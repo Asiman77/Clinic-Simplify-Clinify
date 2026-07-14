@@ -20,15 +20,32 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, Lo
             Long recordId,
             Long doctorId);
 
-    @Query("""
+    Optional<MedicalRecord> findByIdAndPatientId(
+            Long recordId,
+            Long patientId);
+
+    @Query(value = """
                 SELECT new az.clinify.demo.dto.response.MedicalRecordSummaryDto(
                     m.id,
                     m.diagnosis,
-                    m.recordDate
+                    m.recordDate,
+                    CONCAT(m.doctor.user.firstName, ' ', m.doctor.user.lastName),
+                    COUNT(labResponse.id)
                 )
                 FROM MedicalRecord m
+                LEFT JOIN m.labResponses labResponse
                 WHERE m.patient.id = :patientId
+                GROUP BY
+                    m.id,
+                    m.diagnosis,
+                    m.recordDate,
+                    m.doctor.user.firstName,
+                    m.doctor.user.lastName
                 ORDER BY m.recordDate DESC
+            """, countQuery = """
+                SELECT COUNT(m)
+                FROM MedicalRecord m
+                WHERE m.patient.id = :patientId
             """)
     Page<MedicalRecordSummaryDto> findAllSummaryByPatientId(
             @Param("patientId") Long patientId,
