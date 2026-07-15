@@ -50,4 +50,8 @@ public interface LabResponseRepository extends JpaRepository<LabResponse, Long> 
     List<LabResponse> findAllByMedicalRecordId(
             Long medicalRecordId);
 
+    @EntityGraph(attributePaths = { "medicalRecord" })
+    Page<LabResponse> findAllByMedicalRecordPatientId(
+            Long patientId,
+            Pageable pageable);
 }
