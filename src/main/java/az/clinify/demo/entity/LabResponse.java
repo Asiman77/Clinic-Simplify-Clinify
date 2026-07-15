@@ -3,11 +3,12 @@ package az.clinify.demo.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import az.clinify.demo.converter.LabResponseFileMetadataConverter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.valueobject.LabResponseFileMetadata;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -49,7 +50,7 @@ public class LabResponse extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    @Convert(converter = LabResponseFileMetadataConverter.class)
-    @Column(name = "file_metadata", columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "file_metadata", columnDefinition = "json")
     private List<LabResponseFileMetadata> files = new ArrayList<>();
 }
