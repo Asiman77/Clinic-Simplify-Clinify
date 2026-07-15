@@ -18,6 +18,7 @@ import az.clinify.demo.dto.request.UpdateLabResponseRequest;
 import az.clinify.demo.dto.response.LabResponseDetailDTO;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.dto.response.LabResponseSummaryDTO;
+import az.clinify.demo.dto.response.PatientLabResultSummaryDTO;
 import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.enums.LabStatuses;
 import az.clinify.demo.exceptions.BaseBadRequestException;
@@ -73,6 +74,15 @@ public class LabResponseService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Page<PatientLabResultSummaryDTO> getCurrentPatientLabResults(String authenticatedFin, Pageable pageable) {
+        User patient = userRepository.findByFin(authenticatedFin)
+                .orElseThrow(() -> new UserNotFoundException("Patient could not be found"));
+
+        return labResponseRepository.findAllByMedicalRecordPatientId(patient.getId(), pageable)
+                .map(labResponseMapper::toPatientSummary);
+    }
+
     @Transactional
     public LabResponseResponseDTO updateLabResponse(Long id, UpdateLabResponseRequest request,
             String authenticatedFin) {
@@ -110,10 +120,7 @@ public class LabResponseService {
     }
 
     @Transactional
-    public LabResponseResponseDTO uploadLabResponseFile(
-            Long id,
-            MultipartFile file,
-            String authenticatedFin) {
+    public LabResponseResponseDTO uploadLabResponseFile(Long id, MultipartFile file, String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
         validateEditable(labResponse);
         User technician = getCurrentLabTechnician(authenticatedFin);
@@ -131,10 +138,7 @@ public class LabResponseService {
     }
 
     @Transactional
-    public LabResponseResponseDTO deleteLabResponseFile(
-            Long id,
-            String publicId,
-            String authenticatedFin) {
+    public LabResponseResponseDTO deleteLabResponseFile(Long id, String publicId, String authenticatedFin) {
         LabResponse labResponse = getLabResponseEntityById(id);
         validateEditable(labResponse);
         User technician = getCurrentLabTechnician(authenticatedFin);

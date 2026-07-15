@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 
 import az.clinify.demo.dto.request.DeleteLabResponseFileRequest;
 import az.clinify.demo.dto.response.LabResponseSummaryDTO;
+import az.clinify.demo.dto.response.PatientLabResultSummaryDTO;
 import az.clinify.demo.dto.request.LabResponseStatusRequest;
 import az.clinify.demo.dto.request.UpdateLabResponseRequest;
 import az.clinify.demo.dto.response.LabResponseDetailDTO;
@@ -36,6 +37,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class LabResponseController {
         private final LabResponseService labResponseService;
+
+        @GetMapping("/patient/mine")
+        @PreAuthorize("hasRole('PATIENT')")
+        public ResponseEntity<Page<PatientLabResultSummaryDTO>> getCurrentPatientLabResults(Principal principal,
+                        @PageableDefault(page = 0, size = 10, sort = "medicalRecord.recordDate", direction = Sort.Direction.DESC) Pageable pageable) {
+                return ResponseEntity.ok(labResponseService.getCurrentPatientLabResults(principal.getName(), pageable));
+        }
 
         @GetMapping
         @PreAuthorize("hasAnyRole('ADMIN', 'LAB_TECHNICIAN')")
