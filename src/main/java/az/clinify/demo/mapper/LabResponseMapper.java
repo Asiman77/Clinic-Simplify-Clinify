@@ -3,6 +3,7 @@ package az.clinify.demo.mapper;
 import az.clinify.demo.dto.response.LabResponseDetailDTO;
 import az.clinify.demo.dto.response.LabResponseResponseDTO;
 import az.clinify.demo.dto.response.LabResponseSummaryDTO;
+import az.clinify.demo.dto.response.PatientLabResultSummaryDTO;
 import az.clinify.demo.entity.DoctorProfile;
 import az.clinify.demo.entity.LabResponse;
 import az.clinify.demo.entity.MedicalRecord;
@@ -40,6 +41,30 @@ public class LabResponseMapper {
         return response;
     }
 
+    public PatientLabResultSummaryDTO toPatientSummary(
+            LabResponse labResponse) {
+        if (labResponse == null) {
+            return null;
+        }
+
+        MedicalRecord medicalRecord = labResponse.getMedicalRecord();
+
+        PatientLabResultSummaryDTO response = new PatientLabResultSummaryDTO();
+
+        response.setId(labResponse.getId());
+        response.setMedicalRecordId(medicalRecord.getId());
+        response.setDiagnosis(medicalRecord.getDiagnosis());
+        response.setRecordDate(medicalRecord.getRecordDate());
+        response.setTestName(labResponse.getTestName());
+        response.setStatus(labResponse.getStatus());
+        response.setResultText(labResponse.getResultText());
+        response.setNote(labResponse.getNote());
+        response.setFiles(labResponse.getFiles());
+
+        return response;
+    }
+
+    // Admin and lab technician
     public LabResponseSummaryDTO toSummary(LabResponse labResponse) {
         if (labResponse == null) {
             return null;
@@ -53,14 +78,10 @@ public class LabResponseMapper {
 
         response.setId(labResponse.getId());
         response.setMedicalRecordId(medicalRecord.getId());
-
         response.setPatientId(patient.getId());
         response.setPatientFullName(fullName(patient));
-
         response.setDoctorId(doctor.getId());
-        response.setDoctorFullName(
-                fullName(doctor.getUser()));
-
+        response.setDoctorFullName(fullName(doctor.getUser()));
         response.setTestName(labResponse.getTestName());
         response.setStatus(labResponse.getStatus());
         response.setCreatedAt(labResponse.getCreatedAt());
