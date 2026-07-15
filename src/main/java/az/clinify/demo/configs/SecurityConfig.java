@@ -137,6 +137,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/records").hasRole("DOCTOR")
                         .requestMatchers(HttpMethod.PUT, "/api/records/*").hasRole("DOCTOR")
 
+                        .requestMatchers(HttpMethod.GET, "/api/lab-responses/patient/mine")
+                        .hasRole("PATIENT")
                         .requestMatchers(HttpMethod.GET, "/api/lab-responses", "/api/lab-responses/**")
                         .hasAnyRole("ADMIN", "LAB_TECHNICIAN")
                         .requestMatchers(HttpMethod.PUT, "/api/lab-responses/**").hasRole("LAB_TECHNICIAN")
